@@ -1,11 +1,35 @@
-function App() {
+import React,{Children} from "react";
+import RootLayout from "./RootLayout";
+import { Navigate,RouterProvider,createBrowserRouter } from 'react-router-dom';
+import Main from './components/main/Main'
+import Login from './components/login/Login'
+import SignUp from "./components/signup/SignUp";
+function App() {  
+  const browserRouter = createBrowserRouter([
+    {
+      path: "",
+      element: <RootLayout />,
+      children: [
+        
+        {
+          path: "login",
+          element: <Login />
+        },
+        {
+          path: "signup",
+          element: <SignUp />
+        },       
+      
+       
+      ]
+    }
+  ])
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <h1 className="text-4xl font-bold text-blue-500">
-        Hello, Tailwind CSS!
-      </h1>
-    </div>
-  );
+    <RouterProvider router={browserRouter}>
+      {Children}
+    </RouterProvider>
+  )
+  
+ 
 }
-
 export default App;
