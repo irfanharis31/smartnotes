@@ -6,7 +6,7 @@ function RootLayout(){
     return (
         <div>
         <Main />
-        <div  style={{minHeight:"90vh"}} className='container'> 
+        <div  style={{minHeight:"0vh"}} className='container'> 
               <Outlet />
         </div>
        </div>

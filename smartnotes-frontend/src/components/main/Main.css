@@ -1,0 +1,16 @@
+*{
+
+}
+
+.main
+{
+    font-size: 80px;
+}
+
+
+@media screen and (max-width: 1200px) {
+    .main
+    {
+        font-size: 60px;
+    }
+}
