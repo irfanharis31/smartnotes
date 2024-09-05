@@ -1,11 +1,12 @@
+// App.jsx
 import React from "react";
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import Main from './components/main/Main';
 import ProfileLayout from "./user-profile/ProfileLayout";
 import Home from "./user-profile/Home";
-import Favourites from "./user-profile/Favourites";
-import Notes from "./user-profile/Notes";
+import FavouritesList from "./user-profile/FavouritesList";  // Updated component name
 import NoteDetail from "./user-profile/NoteDetail"; 
+import Notes from "./user-profile/Notes";
 import Login from './components/login/Login';
 import SignUp from './components/signup/SignUp';
 import Tags from "./user-profile/Tags";
@@ -24,15 +25,19 @@ function App() {
       children: [
         { path: "", element: <Home /> },
         { path: "searchbar", element: <SearchBar /> },
-        { path: "favourites", element: <Favourites /> },
+        { path: "favourites", element: <FavouritesList />,
+          children: [
+            { path: ":noteId", element: <NoteDetail /> },  // Add NoteDetail for favourites
+          ],
+        },
         { path: "notes", element: <Notes />,
           children: [
-            { path: ':noteId', element: <NoteDetail /> },
-          ]
-         },
-         { path: "tags", element: <Tags /> },
-         { path: "trash", element: <Trash /> },
-      ]
+            { path: ":noteId", element: <NoteDetail /> },
+          ],
+        },
+        { path: "tags", element: <Tags /> },
+        { path: "trash", element: <Trash /> },
+      ],
     },
     {
       path: "/login",

@@ -1,13 +1,49 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 function Login() {
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    username: '',
+    password: ''
+  });
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    navigate('/profile');
+  // Handle input changes
+  const handleChange = (event) => {
+    const { id, value } = event.target;
+    setFormData({ ...formData, [id]: value });
   };
+
+  // Handle form submission
+// Handle form submission
+const handleSubmit = async (event) => {
+  event.preventDefault();
+
+  try {
+    // Sending the data to the backend
+    const response = await fetch('http://localhost:3000/user-api/users/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
+
+    // Handling the response
+    const data = await response.json();
+
+    if (response.ok) {
+      // Save token and username in localStorage upon successful login
+      localStorage.setItem('token', data.token); // Store the token
+      localStorage.setItem('username', data.username); // Ensure `data.username` is correct
+      navigate('/profile'); // Navigate to the profile page
+    } else {
+      alert(`Login failed: ${data.message}`);
+    }
+  } catch (error) {
+    alert('An error occurred during login.');
+  }
+};
 
   return (
     <div className='w-96 mb-10 pt-12'>
@@ -19,8 +55,11 @@ function Login() {
             <input
               type="text"
               id="username"
+              value={formData.username}
+              onChange={handleChange}
               className='w-full py-3 px-4 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#41b3a2] focus:border-transparent'
-              placeholder="Enter your name"
+              placeholder="Enter your username"
+              required
             />
           </div>
           
@@ -29,8 +68,11 @@ function Login() {
             <input
               type="password"
               id="password"
+              value={formData.password}
+              onChange={handleChange}
               className='w-full py-3 px-4 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#41b3a2] focus:border-transparent'
               placeholder="Enter your password"
+              required
             />
           </div>
          

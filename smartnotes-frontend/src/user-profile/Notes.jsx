@@ -4,7 +4,7 @@ import { Outlet } from 'react-router-dom';
 function Notes() {
   return (
     <div>
-      <h2>Note Content</h2>
+      <h2></h2>
       <Outlet />
     </div>
   );
