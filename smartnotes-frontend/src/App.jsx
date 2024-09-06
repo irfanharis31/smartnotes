@@ -6,6 +6,7 @@ import ProfileLayout from "./user-profile/ProfileLayout";
 import Home from "./user-profile/Home";
 import FavouritesList from "./user-profile/FavouritesList";  // Updated component name
 import NoteDetail from "./user-profile/NoteDetail"; 
+import FavNoteDetail from "./user-profile/FavNotesDetail"; 
 import Notes from "./user-profile/Notes";
 import Login from './components/login/Login';
 import SignUp from './components/signup/SignUp';
@@ -27,7 +28,7 @@ function App() {
         { path: "searchbar", element: <SearchBar /> },
         { path: "favourites", element: <FavouritesList />,
           children: [
-            { path: ":noteId", element: <NoteDetail /> },  // Add NoteDetail for favourites
+            { path: ":noteId", element: <FavNoteDetail /> },  // Add NoteDetail for favourites
           ],
         },
         { path: "notes", element: <Notes />,

@@ -10,7 +10,7 @@ const debounce = (func, delay) => {
   };
 };
 
-function NoteDetail() {
+function FavNoteDetail() {
   const { noteId } = useParams();
   const navigate = useNavigate();
   const [note, setNote] = useState({});
@@ -19,10 +19,6 @@ function NoteDetail() {
   const [tags, setTags] = useState([]);
   const [isFavourite, setIsFavourite] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-  const [isNewNote, setIsNewNote] = useState(!noteId);
-  const [showTagOptions, setShowTagOptions] = useState(false);
-
-  const predefinedTags = ['Personal', 'Work'];
 
   useEffect(() => {
     if (noteId) {
@@ -89,18 +85,10 @@ function NoteDetail() {
   };
 
   const handleAddTag = () => {
-    setShowTagOptions(!showTagOptions);
-  };
-
-  const handleSelectTag = (tag) => {
-    if (!tags.includes(tag)) {
-      setTags([...tags, tag]);
+    const newTag = prompt('Enter a new tag:');
+    if (newTag) {
+      setTags([...tags, newTag]);
     }
-    setShowTagOptions(false);
-  };
-
-  const handleRemoveTag = (tag) => {
-    setTags(tags.filter(t => t !== tag));
   };
 
   const handleToggleFavourite = async () => {
@@ -117,25 +105,34 @@ function NoteDetail() {
     }
   };
 
-  const handleToggleLock = () => {
-    setIsLocked(!isLocked);
-  };
-
-  const handleDeleteNote = async () => {
-    const confirmDelete = window.confirm('Are you sure you want to move this note to trash?');
-    if (confirmDelete) {
+  const handleRemoveFromFavourites = async () => {
+    if (window.confirm('Are you sure you want to remove this note from favourites?')) {
       try {
-        await fetch(`http://localhost:3000/user-api/users/notes/delete/${noteId}`, {
+        await fetch(`http://localhost:3000/user-api/users/notes/unfavorite/${noteId}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },
         });
-        alert('Note moved to trash.');
-        navigate('/notes');
+        setIsFavourite(false);
+        alert('Note removed from favourites.');
       } catch (error) {
-        console.error('Error moving note to trash:', error);
+        console.error('Error removing note from favourites:', error);
       }
+    }
+  };
+
+  const handleToggleLock = async () => {
+    try {
+      await fetch(`http://localhost:3000/user-api/users/notes/lock/${noteId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      setIsLocked(!isLocked);
+    } catch (error) {
+      console.error('Error updating lock status:', error);
     }
   };
 
@@ -155,39 +152,27 @@ function NoteDetail() {
         >
           Add Tag
         </button>
-        {showTagOptions && (
-          <div className="absolute bg-white border border-gray-300 rounded-md shadow-lg mt-2">
-            {predefinedTags.map((tag) => (
-              <div
-                key={tag}
-                onClick={() => handleSelectTag(tag)}
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-              >
-                {tag}
-              </div>
-            ))}
-          </div>
+        {isFavourite ? (
+          <button
+            onClick={handleRemoveFromFavourites}
+            className="px-3 py-1 bg-red-600 text-white font-semibold rounded hover:bg-red-500 transition duration-300"
+          >
+            Remove from Favourites
+          </button>
+        ) : (
+          <button
+            onClick={handleToggleFavourite}
+            className="px-3 py-1 bg-[#41b3a2] text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300"
+          >
+            Add to Favourites
+          </button>
         )}
-        <button
-          onClick={handleToggleFavourite}
-          className={`px-3 py-1 ${isFavourite ? 'bg-yellow-400' : 'bg-[#41b3a2]'} text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300`}
-        >
-          {isFavourite ? 'Remove from Favourites' : 'Add to Favourites'}
-        </button>
         <button
           onClick={handleToggleLock}
           className={`px-3 py-1 ${isLocked ? 'bg-red-500' : 'bg-[#41b3a2]'} text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300`}
         >
           {isLocked ? 'Unlock Note' : 'Lock Note'}
         </button>
-        {!isNewNote && (
-          <button
-            onClick={handleDeleteNote}
-            className="px-3 py-1 bg-red-600 text-white font-semibold rounded hover:bg-red-500 transition duration-300"
-          >
-            Delete Note
-          </button>
-        )}
       </div>
       <textarea
         value={noteText}
@@ -196,20 +181,10 @@ function NoteDetail() {
         placeholder="Enter your note content here..."
         disabled={isLocked}
       />
-      <div className="mt-2">
+      <div>
         {tags.map((tag, index) => (
-          <span
-            key={index}
-            className="inline-flex items-center px-2 py-1 text-md bg-gray-200 rounded-full mr-2"
-            >
+          <span key={index} className="px-2 py-1 text-sm bg-gray-200 rounded-full mr-2">
             {tag}
-            <button
-              onClick={() => handleRemoveTag(tag)}
-              className="ml-2 text-red-700 text-2xl pb-0.5"
-              aria-label={`Remove ${tag}`}
-            >
-              &times;
-            </button>
           </span>
         ))}
       </div>
@@ -217,4 +192,4 @@ function NoteDetail() {
   );
 }
 
-export default NoteDetail;
+export default FavNoteDetail;

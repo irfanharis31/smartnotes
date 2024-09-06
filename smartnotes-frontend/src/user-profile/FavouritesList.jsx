@@ -43,7 +43,7 @@ function FavouritesList() {
       <h2 className="text-2xl font-semibold mb-4">Favourites</h2>
       <ul>
         {favourites.length === 0 ? (
-          <p>No favourite notes available.</p>
+          <p></p>
         ) : (
           favourites.map(note => (
             <li key={note.id} className="flex items-center mb-2">
