@@ -1,218 +1,370 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import UserLogo from "../assets/userlogo.svg";
+import homeicon from "../assets/home.svg";
+import favouritesicon from "../assets/favourites.svg";
+import tagicon from "../assets/tagicon.svg";
+import notesicon from "../assets/notesicon.svg";
+import trashicon from "../assets/trashicon.svg";
+import SearchBar from "./SearchBar";
+import { FaEllipsisV } from "react-icons/fa"; // Three dots icon
+import { MdKeyboardArrowDown } from "react-icons/md"; // Down arrow icon
 
-// Debounce utility function
-const debounce = (func, delay) => {
-  let timeoutId;
-  return (...args) => {
-    if (timeoutId) clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay);
-  };
-};
-
-function NoteDetail() {
-  const { noteId } = useParams();
-  const navigate = useNavigate();
-  const [note, setNote] = useState({});
-  const [noteTitle, setNoteTitle] = useState('');
-  const [noteText, setNoteText] = useState('');
+function Sidebar() {
+  const [showNotesDropdown, setShowNotesDropdown] = useState(false);
+  const [showFavoritesDropdown, setShowFavoritesDropdown] = useState(false);
+  const [showTagsDropdown, setShowTagsDropdown] = useState(false);
+  const [showTagCategoriesDropdown, setShowTagCategoriesDropdown] = useState(false);
+  const [showTrashDropdown, setShowTrashDropdown] = useState(false);
+  const [notes, setNotes] = useState([]);
+  const [favoriteNotes, setFavoriteNotes] = useState([]);
   const [tags, setTags] = useState([]);
-  const [isFavourite, setIsFavourite] = useState(false);
-  const [isLocked, setIsLocked] = useState(false);
-  const [isNewNote, setIsNewNote] = useState(!noteId);
-  const [showTagOptions, setShowTagOptions] = useState(false);
+  const [trash, setTrash] = useState([]);
+  const [isEditing, setIsEditing] = useState("");
+  const [noteNameInput, setNoteNameInput] = useState("");
+  const [username, setUsername] = useState("Loading...");
+  const [isCreating, setIsCreating] = useState(false);
+  const [selectedTag, setSelectedTag] = useState("");
+  const [filteredNotes, setFilteredNotes] = useState([]);
+  const [selectedTrashItemId, setSelectedTrashItemId] = useState(null);
+  const [showPersonalTagNotes, setShowPersonalTagNotes] = useState(false);
+  const [showWorkTagNotes, setShowWorkTagNotes] = useState(false);
+  const [showLogoutMenu, setShowLogoutMenu] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
-  const predefinedTags = ['Personal', 'Work'];
+  const toggleNotesDropdown = () => setShowNotesDropdown(!showNotesDropdown);
+  const toggleFavoritesDropdown = () => setShowFavoritesDropdown(!showFavoritesDropdown);
+  const toggleTagsDropdown = () => setShowTagsDropdown(!showTagsDropdown);
+  const toggleTagCategoriesDropdown = () => setShowTagCategoriesDropdown(!showTagCategoriesDropdown);
+  const toggleTrashDropdown = () => setShowTrashDropdown(!showTrashDropdown);
+  const toggleLogoutMenu = () => setShowLogoutMenu(!showLogoutMenu);
 
-  useEffect(() => {
-    if (noteId) {
-      const fetchNote = async () => {
-        try {
-          const response = await fetch(`http://localhost:3000/user-api/users/notes/${noteId}`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
-          });
-          const data = await response.json();
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/login"; // Redirect to login page or home page
+  };
 
-          if (data.noteId === noteId) {
-            setNote(data);
-            setNoteTitle(data.title || '');
-            setNoteText(data.content || '');
-            setTags(data.tags || []);
-            setIsFavourite(data.isFavorite || false);
-            setIsLocked(data.isLocked || false);
-          } else {
-            console.error('Note ID mismatch');
-          }
-        } catch (error) {
-          console.error('Error fetching note:', error);
-        }
-      };
+  const handleConfirmLogout = () => {
+    setConfirmLogout(true);
+  };
 
-      fetchNote();
-    }
-  }, [noteId]);
+  const handleCancelLogout = () => {
+    setConfirmLogout(false);
+    setShowLogoutMenu(false);
+  };
 
   useEffect(() => {
-    const autoSaveNote = debounce(async () => {
+    const fetchUserData = async () => {
       try {
-        await fetch(`http://localhost:3000/user-api/users/notes/${noteId}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            title: noteTitle,
-            content: noteText,
-            tags,
-            isFavorite: isFavourite,
-            isLocked,
-          }),
-        });
-        console.log('Note auto-saved successfully!');
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("Authorization token is missing");
+          return;
+        }
+
+        const headers = { Authorization: `Bearer ${token}` };
+
+        const userResponse = await fetch("http://localhost:3000/user-api/users/me", { headers });
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setUsername(userData.username);
+        } else {
+          console.error("Failed to fetch user data");
+        }
+
+        const notesResponse = await fetch("http://localhost:3000/user-api/users/notes", { headers });
+        if (notesResponse.ok) {
+          const notesData = await notesResponse.json();
+          setNotes(notesData);
+          setFilteredNotes(notesData); // Initialize filteredNotes with all notes
+        } else {
+          console.error("Failed to fetch notes");
+        }
+
+        const favoritesResponse = await fetch("http://localhost:3000/user-api/users/notes/favorites", { headers });
+        if (favoritesResponse.ok) {
+          const favoritesData = await favoritesResponse.json();
+          setFavoriteNotes(favoritesData);
+        } else {
+          console.error("Failed to fetch favorite notes");
+        }
+
+        const tagsResponse = await fetch("http://localhost:3000/user-api/users/tags", { headers });
+        if (tagsResponse.ok) {
+          const tagsData = await tagsResponse.json();
+          setTags(tagsData);
+        } else {
+          console.error("Failed to fetch tags");
+        }
+
+        const trashResponse = await fetch("http://localhost:3000/user-api/users/notes/recycle-bin", { headers });
+        if (trashResponse.ok) {
+          const trashData = await trashResponse.json();
+          setTrash(trashData);
+        } else {
+          console.error("Failed to fetch trash");
+        }
       } catch (error) {
-        console.error('Error auto-saving note:', error);
+        console.error("Error fetching user data:", error);
       }
-    }, 1000); // Delay of 1 second
+    };
 
-    autoSaveNote();
-  }, [noteText, noteTitle, tags, isFavourite, isLocked, noteId]);
+    fetchUserData();
+  }, []);
 
-  const handleTitleChange = (e) => {
-    setNoteTitle(e.target.value);
+  useEffect(() => {
+    if (selectedTag) {
+      const filtered = notes.filter(note => note.tags.includes(selectedTag));
+      setFilteredNotes(filtered);
+    } else {
+      setFilteredNotes(notes);
+    }
+  }, [selectedTag, notes]);
+
+  const handleNewNote = () => {
+    setIsCreating(true);
+    setNoteNameInput("");
   };
 
-  const handleTextChange = (e) => {
-    setNoteText(e.target.value);
-  };
+  const handleCreateNote = async () => {
+    if (!noteNameInput.trim()) return;
 
-  const handleAddTag = () => {
-    setShowTagOptions(!showTagOptions);
-  };
+    const createdDate = new Date().toISOString();
+    const newNote = { noteId: createdDate, title: noteNameInput, content: "", tags: [] };
 
-  const handleSelectTag = (tag) => {
-    setTags([tag]); // Ensure only one tag is assigned
-    setShowTagOptions(false);
-  };
-
-  const handleRemoveTag = () => {
-    setTags([]); // Remove current tag
-  };
-
-  const handleToggleFavourite = async () => {
     try {
-      await fetch(`http://localhost:3000/user-api/users/notes/favorite/${noteId}`, {
-        method: 'PUT',
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Authorization token is missing");
+        return;
+      }
+
+      const response = await fetch("http://localhost:3000/user-api/users/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(newNote),
+      });
+
+      if (response.ok) {
+        const notesData = await response.json();
+        setNotes(prevNotes => [...prevNotes, notesData.note]);
+        setIsCreating(false);
+        setNoteNameInput("");
+      } else {
+        console.error("Failed to save note to backend");
+      }
+    } catch (error) {
+      console.error("Error saving note to backend:", error);
+    }
+  };
+
+  const handleRenameNote = async (id) => {
+    if (!noteNameInput.trim()) return;
+
+    const updatedNotes = notes.map(note =>
+      note.noteId === id ? { ...note, title: noteNameInput } : note
+    );
+    setNotes(updatedNotes);
+    setIsEditing(null);
+    setNoteNameInput("");
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Authorization token is missing");
+        return;
+      }
+
+      const response = await fetch(`http://localhost:3000/user-api/users/notes/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ title: noteNameInput }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to update note in backend:", errorData.message || response.statusText);
+      } else {
+        console.log("Note updated successfully");
+      }
+    } catch (error) {
+      console.error("Error updating note in backend:", error);
+    }
+  };
+
+  const handleRestoreNote = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Authorization token is missing");
+        return;
+      }
+  
+      const response = await fetch(`http://localhost:3000/user-api/users/notes/undo-delete/${id}`, {
+        method: "PUT",
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
-      setIsFavourite(!isFavourite);
+  
+      if (response.ok) {
+        console.log("Note restored successfully");
+        setTrash(prevTrash => prevTrash.filter(item => item.id !== id));
+      } else {
+        const errorText = await response.text();
+        console.error(`Failed to restore note: ${response.status} - ${errorText}`);
+      }
     } catch (error) {
-      console.error('Error updating favorite status:', error);
+      console.error("Error restoring note:", error);
     }
   };
 
-  const handleToggleLock = () => {
-    setIsLocked(!isLocked);
-  };
-
-  const handleDeleteNote = async () => {
-    const confirmDelete = window.confirm('Are you sure you want to move this note to trash?');
-    if (confirmDelete) {
-      try {
-        await fetch(`http://localhost:3000/user-api/users/notes/delete/${noteId}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        alert('Note moved to trash.');
-        navigate('/notes');
-      } catch (error) {
-        console.error('Error moving note to trash:', error);
+  const handleDeletePermanently = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Authorization token is missing");
+        return;
       }
+  
+      const response = await fetch(`http://localhost:3000/user-api/users/notes/permanent-delete/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        setTrash(prevTrash => prevTrash.filter(item => item.id !== id));
+        console.log("Note deleted permanently");
+      } else {
+        console.error("Failed to delete note permanently:", await response.text());
+      }
+    } catch (error) {
+      console.error("Error deleting note permanently:", error);
     }
   };
 
   return (
-    <div className="p-4">
-      <input
-        type="text"
-        value={noteTitle}
-        onChange={handleTitleChange}
-        placeholder="Enter note title"
-        className="w-full px-4 py-2 mb-2 border rounded-md focus:outline-none focus:ring focus:border-[#41b3a2]"
-      />
-      <div className="flex gap-2 mb-2">
-        <button
-          onClick={handleAddTag}
-          className="px-3 py-1 bg-[#41b3a2] text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300"
-        >
-          Add Tag
-        </button>
-        {showTagOptions && (
-          <div className="absolute bg-white border border-gray-300 rounded-md shadow-lg mt-2">
-            {predefinedTags.map((tag) => (
-              <div
-                key={tag}
-                onClick={() => handleSelectTag(tag)}
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-              >
-                {tag}
+    <div className="sidebar">
+      <div className="sidebar-header">
+        <img src={UserLogo} alt="User Logo" className="user-logo" />
+        <div className="username-dropdown">
+          <span className="username">{username}</span>
+          <MdKeyboardArrowDown className="dropdown-icon" onClick={toggleLogoutMenu} />
+          {showLogoutMenu && (
+            <div className="logout-menu">
+              {confirmLogout ? (
+                <div className="confirm-logout">
+                  <p>Are you sure you want to log out?</p>
+                  <button onClick={handleLogout}>Yes</button>
+                  <button onClick={handleCancelLogout}>No</button>
+                </div>
+              ) : (
+                <button onClick={handleConfirmLogout}>Log out</button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      <SearchBar />
+      <div className="sidebar-links">
+        <Link to="/home" className="sidebar-link">
+          <img src={homeicon} alt="Home" />
+          Home
+        </Link>
+        <div className="sidebar-link" onClick={toggleNotesDropdown}>
+          <img src={notesicon} alt="Notes" />
+          Notes
+          <FaEllipsisV className="dropdown-icon" />
+        </div>
+        {showNotesDropdown && (
+          <div className="notes-dropdown">
+            {notes.map(note => (
+              <div key={note.noteId} className="note-item">
+                {isEditing === note.noteId ? (
+                  <div>
+                    <input
+                      type="text"
+                      value={noteNameInput}
+                      onChange={(e) => setNoteNameInput(e.target.value)}
+                      onBlur={() => handleRenameNote(note.noteId)}
+                    />
+                  </div>
+                ) : (
+                  <span onClick={() => setIsEditing(note.noteId)}>{note.title}</span>
+                )}
+              </div>
+            ))}
+            <button onClick={handleNewNote}>Create New Note</button>
+            {isCreating && (
+              <div className="create-note-form">
+                <input
+                  type="text"
+                  value={noteNameInput}
+                  onChange={(e) => setNoteNameInput(e.target.value)}
+                />
+                <button onClick={handleCreateNote}>Save</button>
+              </div>
+            )}
+          </div>
+        )}
+        <div className="sidebar-link" onClick={toggleFavoritesDropdown}>
+          <img src={favouritesicon} alt="Favorites" />
+          Favorites
+          <FaEllipsisV className="dropdown-icon" />
+        </div>
+        {showFavoritesDropdown && (
+          <div className="favorites-dropdown">
+            {favoriteNotes.map(note => (
+              <div key={note.noteId} className="note-item">{note.title}</div>
+            ))}
+          </div>
+        )}
+        <div className="sidebar-link" onClick={toggleTagsDropdown}>
+          <img src={tagicon} alt="Tags" />
+          Tags
+          <FaEllipsisV className="dropdown-icon" />
+        </div>
+        {showTagsDropdown && (
+          <div className="tags-dropdown">
+            <div className="tags-category" onClick={toggleTagCategoriesDropdown}>
+              <span>Categories</span>
+              <FaEllipsisV className="dropdown-icon" />
+            </div>
+            {showTagCategoriesDropdown && (
+              <div className="tag-categories">
+                <div className="tag-category" onClick={() => setSelectedTag("Personal")}>
+                  Personal
+                </div>
+                <div className="tag-category" onClick={() => setSelectedTag("Work")}>
+                  Work
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        <div className="sidebar-link" onClick={toggleTrashDropdown}>
+          <img src={trashicon} alt="Trash" />
+          Trash
+          <FaEllipsisV className="dropdown-icon" />
+        </div>
+        {showTrashDropdown && (
+          <div className="trash-dropdown">
+            {trash.map(item => (
+              <div key={item.id} className="trash-item">
+                {item.title}
+                <button onClick={() => handleRestoreNote(item.id)}>Restore</button>
+                <button onClick={() => handleDeletePermanently(item.id)}>Delete Permanently</button>
               </div>
             ))}
           </div>
         )}
-        <button
-          onClick={handleToggleFavourite}
-          className={`px-3 py-1 ${isFavourite ? 'bg-yellow-400' : 'bg-[#41b3a2]'} text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300`}
-        >
-          {isFavourite ? 'Remove from Favourites' : 'Add to Favourites'}
-        </button>
-        <button
-          onClick={handleToggleLock}
-          className={`px-3 py-1 ${isLocked ? 'bg-red-500' : 'bg-[#41b3a2]'} text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300`}
-        >
-          {isLocked ? 'Unlock Note' : 'Lock Note'}
-        </button>
-        {!isNewNote && (
-          <button
-            onClick={handleDeleteNote}
-            className="px-3 py-1 bg-red-600 text-white font-semibold rounded hover:bg-red-500 transition duration-300"
-          >
-            Delete Note
-          </button>
-        )}
-      </div>
-      <textarea
-        value={noteText}
-        onChange={handleTextChange}
-        className="w-full h-96 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#41b3a2] focus:border-transparent"
-        placeholder="Enter your note content here..."
-        disabled={isLocked}
-      />
-      <div className="mt-2">
-        {tags.map((tag, index) => (
-          <span
-            key={index}
-            className="inline-flex items-center px-2 py-1 text-md bg-gray-200 rounded-full mr-2"
-            >
-            {tag}
-            <button
-              onClick={() => handleRemoveTag(tag)}
-              className="ml-2 text-red-700 text-2xl pb-0.5"
-              aria-label={`Remove ${tag}`}
-            >
-              &times;
-            </button>
-          </span>
-        ))}
       </div>
     </div>
   );
 }
 
-export default NoteDetail;
+export default Sidebar;

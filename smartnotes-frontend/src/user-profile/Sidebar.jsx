@@ -8,6 +8,7 @@ import notesicon from "../assets/notesicon.svg";
 import trashicon from "../assets/trashicon.svg";
 import SearchBar from "./SearchBar";
 import { FaEllipsisV } from "react-icons/fa"; // Three dots icon
+import { MdKeyboardArrowDown } from "react-icons/md"; // Down arrow icon
 
 function Sidebar() {
   const [showNotesDropdown, setShowNotesDropdown] = useState(false);
@@ -28,12 +29,30 @@ function Sidebar() {
   const [selectedTrashItemId, setSelectedTrashItemId] = useState(null);
   const [showPersonalTagNotes, setShowPersonalTagNotes] = useState(false);
   const [showWorkTagNotes, setShowWorkTagNotes] = useState(false);
-  
+  const [showLogoutMenu, setShowLogoutMenu] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
+
   const toggleNotesDropdown = () => setShowNotesDropdown(!showNotesDropdown);
   const toggleFavoritesDropdown = () => setShowFavoritesDropdown(!showFavoritesDropdown);
   const toggleTagsDropdown = () => setShowTagsDropdown(!showTagsDropdown);
   const toggleTagCategoriesDropdown = () => setShowTagCategoriesDropdown(!showTagCategoriesDropdown);
   const toggleTrashDropdown = () => setShowTrashDropdown(!showTrashDropdown);
+  const toggleLogoutMenu = () => setShowLogoutMenu(!showLogoutMenu);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/login"; // Redirect to login page or home page
+  };
+
+  const handleConfirmLogout = () => {
+    setConfirmLogout(true);
+  };
+
+  const handleCancelLogout = () => {
+    setConfirmLogout(false);
+    setShowLogoutMenu(false);
+  };
+
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -254,14 +273,75 @@ function Sidebar() {
   return (
     <div className="w-full">
       <div>
-        <div className="flex items-center mt-6">
-          <div className="w-16 h-16 overflow-hidden">
-            <img src={UserLogo} width="45px" alt="Profile" className="rounded-full bg-[#41b3a2] py-2 px-2.5" />
+      <div className="relative flex items-center mt-6">
+  <div className="w-16 h-16 overflow-hidden">
+    <img
+      src={UserLogo}
+      width="45px"
+      alt="Profile"
+      className="rounded-full bg-[#41b3a2] py-2 px-2.5"
+    />
+  </div>
+  <div className="flex items-center ml-4">
+    <span className="username text-3xl">{username}</span>
+    <MdKeyboardArrowDown
+      className="dropdown-icon text-2xl ml-2 cursor-pointer"
+      onClick={toggleLogoutMenu}
+    />
+    {showLogoutMenu && (
+      <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg">
+        {confirmLogout ? (
+          <div className="p-4 text-center">
+            <p className="mb-4">Are you sure you want to log out?</p>
+            <div className="flex justify-center gap-4">
+              <button
+                className="bg-red-500 text-white py-2 px-4 rounded"
+                onClick={handleLogout}
+              >
+                Yes
+              </button>
+              <button
+                className="bg-gray-300 text-black py-2 px-4 rounded"
+                onClick={handleCancelLogout}
+              >
+                No
+              </button>
+            </div>
           </div>
-          <div className="pb-5">
-            <h1 className="text-[#000000] text-2xl font-semibold">{username}</h1>
-          </div>
+        ) : (
+          <button
+            className="w-full py-2 px-4 text-left hover:bg-gray-200"
+            onClick={handleConfirmLogout}
+          >
+            Log out
+          </button>
+        )}
+      </div>
+    )}
+  </div>
+  {showLogoutMenu && confirmLogout && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+      <div className="bg-white p-6 rounded shadow-lg">
+        <p className="mb-4 text-center">Are you sure you want to log out?</p>
+        <div className="flex justify-center gap-4">
+          <button
+            className="bg-red-500 text-white py-2 px-4 rounded"
+            onClick={handleLogout}
+          >
+            Yes
+          </button>
+          <button
+            className="bg-gray-300 text-black py-2 px-4 rounded"
+            onClick={handleCancelLogout}
+          >
+            No
+          </button>
         </div>
+      </div>
+    </div>
+  )}
+</div>
+
   
         <SearchBar onSearch={(searchTerm) => console.log("Searching for:", searchTerm)} />
   
