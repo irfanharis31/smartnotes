@@ -93,14 +93,12 @@ function NoteDetail() {
   };
 
   const handleSelectTag = (tag) => {
-    if (!tags.includes(tag)) {
-      setTags([...tags, tag]);
-    }
+    setTags([tag]); // Ensure only one tag is assigned
     setShowTagOptions(false);
   };
 
-  const handleRemoveTag = (tag) => {
-    setTags(tags.filter(t => t !== tag));
+  const handleRemoveTag = () => {
+    setTags([]); // Remove current tag
   };
 
   const handleToggleFavourite = async () => {
@@ -114,6 +112,23 @@ function NoteDetail() {
       setIsFavourite(!isFavourite);
     } catch (error) {
       console.error('Error updating favorite status:', error);
+    }
+  };
+   
+  const handleRemoveFromFavourites = async () => {
+    if (window.confirm('Are you sure you want to remove this note from favourites?')) {
+      try {
+        await fetch(`http://localhost:3000/user-api/users/notes/unfavorite/${noteId}`, {
+          method: 'PUT', 
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+        setIsFavourite(false);
+        alert('Note removed from favourites.');
+      } catch (error) {
+        console.error('Error removing note from favourites:', error);
+      }
     }
   };
 
@@ -168,12 +183,21 @@ function NoteDetail() {
             ))}
           </div>
         )}
-        <button
-          onClick={handleToggleFavourite}
-          className={`px-3 py-1 ${isFavourite ? 'bg-yellow-400' : 'bg-[#41b3a2]'} text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300`}
-        >
-          {isFavourite ? 'Remove from Favourites' : 'Add to Favourites'}
-        </button>
+          {isFavourite ? (
+          <button
+            onClick={handleRemoveFromFavourites}
+            className="px-3 py-1 bg-red-600 text-white font-semibold rounded hover:bg-red-500 transition duration-300"
+          >
+            Remove from Favourites
+          </button>
+        ) : (
+          <button
+            onClick={handleToggleFavourite}
+            className="px-3 py-1 bg-[#41b3a2] text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300"
+          >
+            Add to Favourites
+          </button>
+        )}
         <button
           onClick={handleToggleLock}
           className={`px-3 py-1 ${isLocked ? 'bg-red-500' : 'bg-[#41b3a2]'} text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300`}

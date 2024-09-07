@@ -1,385 +1,218 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import UserLogo from "../assets/userlogo.svg";
-import homeicon from "../assets/home.svg";
-import favouritesicon from "../assets/favourites.svg";
-import tagicon from "../assets/tagicon.svg";
-import notesicon from "../assets/notesicon.svg";
-import trashicon from "../assets/trashicon.svg";
-import SearchBar from "./SearchBar";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 
-function Sidebar() {
-  const [showNotesDropdown, setShowNotesDropdown] = useState(false);
-  const [showFavoritesDropdown, setShowFavoritesDropdown] = useState(false);
-  const [showTagsDropdown, setShowTagsDropdown] = useState(false);
-  const [showTrashDropdown, setShowTrashDropdown] = useState(false);
-  const [notes, setNotes] = useState([]);
-  const [favoriteNotes, setFavoriteNotes] = useState([]);
+// Debounce utility function
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+};
+
+function NoteDetail() {
+  const { noteId } = useParams();
+  const navigate = useNavigate();
+  const [note, setNote] = useState({});
+  const [noteTitle, setNoteTitle] = useState('');
+  const [noteText, setNoteText] = useState('');
   const [tags, setTags] = useState([]);
-  const [trash, setTrash] = useState([]);
-  const [isEditing, setIsEditing] = useState("");
-  const [noteNameInput, setNoteNameInput] = useState("");
-  const [username, setUsername] = useState("Loading...");
-  const [isCreating, setIsCreating] = useState(false);
+  const [isFavourite, setIsFavourite] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [isNewNote, setIsNewNote] = useState(!noteId);
+  const [showTagOptions, setShowTagOptions] = useState(false);
 
-  const toggleNotesDropdown = () => {
-    setShowNotesDropdown(!showNotesDropdown);
-  };
-
-  const toggleFavoritesDropdown = () => {
-    setShowFavoritesDropdown(!showFavoritesDropdown);
-  };
-
-  const toggleTagsDropdown = () => {
-    setShowTagsDropdown(!showTagsDropdown);
-  };
-
-  const toggleTrashDropdown = () => {
-    setShowTrashDropdown(!showTrashDropdown);
-  };
+  const predefinedTags = ['Personal', 'Work'];
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    if (noteId) {
+      const fetchNote = async () => {
+        try {
+          const response = await fetch(`http://localhost:3000/user-api/users/notes/${noteId}`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            },
+          });
+          const data = await response.json();
+
+          if (data.noteId === noteId) {
+            setNote(data);
+            setNoteTitle(data.title || '');
+            setNoteText(data.content || '');
+            setTags(data.tags || []);
+            setIsFavourite(data.isFavorite || false);
+            setIsLocked(data.isLocked || false);
+          } else {
+            console.error('Note ID mismatch');
+          }
+        } catch (error) {
+          console.error('Error fetching note:', error);
+        }
+      };
+
+      fetchNote();
+    }
+  }, [noteId]);
+
+  useEffect(() => {
+    const autoSaveNote = debounce(async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          console.error("Authorization token is missing");
-          return;
-        }
-
-        const headers = {
-          Authorization: `Bearer ${token}`,
-        };
-
-        // Fetch username
-        const userResponse = await fetch(
-          "http://localhost:3000/user-api/users/me",
-          { headers }
-        );
-
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          setUsername(userData.username);
-        } else {
-          console.error("Failed to fetch user data");
-        }
-
-        // Fetch notes
-        const notesResponse = await fetch(
-          "http://localhost:3000/user-api/users/notes",
-          { headers }
-        );
-
-        if (notesResponse.ok) {
-          const notesData = await notesResponse.json();
-          setNotes(notesData);
-        } else {
-          console.error("Failed to fetch notes");
-        }
-
-        // Fetch favorite notes
-        const favoritesResponse = await fetch(
-          "http://localhost:3000/user-api/users/notes/favorites",
-          { headers }
-        );
-
-        if (favoritesResponse.ok) {
-          const favoritesData = await favoritesResponse.json();
-          setFavoriteNotes(favoritesData);
-        } else {
-          console.error("Failed to fetch favorite notes");
-        }
-
-        // Fetch tags
-        const tagsResponse = await fetch(
-          "http://localhost:3000/user-api/users/tags",
-          { headers }
-        );
-
-        if (tagsResponse.ok) {
-          const tagsData = await tagsResponse.json();
-          setTags(tagsData);
-        } else {
-          console.error("Failed to fetch tags");
-        }
-
-        // Fetch trash
-        const trashResponse = await fetch(
-          "http://localhost:3000/user-api/users/notes/recycle-bin",
-          { headers }
-        );
-
-        if (trashResponse.ok) {
-          const trashData = await trashResponse.json();
-          setTrash(trashData);
-        } else {
-          console.error("Failed to fetch trash");
-        }
+        await fetch(`http://localhost:3000/user-api/users/notes/${noteId}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: noteTitle,
+            content: noteText,
+            tags,
+            isFavorite: isFavourite,
+            isLocked,
+          }),
+        });
+        console.log('Note auto-saved successfully!');
       } catch (error) {
-        console.error("Error fetching user data:", error);
+        console.error('Error auto-saving note:', error);
       }
-    };
+    }, 1000); // Delay of 1 second
 
-    fetchUserData();
-  }, []);
+    autoSaveNote();
+  }, [noteText, noteTitle, tags, isFavourite, isLocked, noteId]);
 
-  const handleNewNote = () => {
-    setIsCreating(true);
-    setNoteNameInput(""); // Clear input field for new note creation
+  const handleTitleChange = (e) => {
+    setNoteTitle(e.target.value);
   };
 
-  const handleCreateNote = async () => {
-    if (!noteNameInput.trim()) return;
+  const handleTextChange = (e) => {
+    setNoteText(e.target.value);
+  };
 
-    const createdDate = new Date().toISOString();
-    const newNote = {
-      noteId: createdDate,
-      title: noteNameInput, // Set title from input
-      content: "", // Initialize with empty content
-      tags: [] // Initialize with empty tags array
-    };
+  const handleAddTag = () => {
+    setShowTagOptions(!showTagOptions);
+  };
 
+  const handleSelectTag = (tag) => {
+    setTags([tag]); // Ensure only one tag is assigned
+    setShowTagOptions(false);
+  };
+
+  const handleRemoveTag = () => {
+    setTags([]); // Remove current tag
+  };
+
+  const handleToggleFavourite = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Authorization token is missing");
-        return;
-      }
-
-      const response = await fetch("http://localhost:3000/user-api/users/notes", {
-        method: "POST",
+      await fetch(`http://localhost:3000/user-api/users/notes/favorite/${noteId}`, {
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify(newNote), // Send the newNote object directly
       });
-
-      if (response.ok) {
-        const notesData = await response.json();
-        setNotes((prevNotes) => [...prevNotes, notesData.note]);
-        setIsCreating(false);
-        setNoteNameInput(""); // Reset input field after creation
-      } else {
-        console.error("Failed to save note to backend");
-      }
+      setIsFavourite(!isFavourite);
     } catch (error) {
-      console.error("Error saving note to backend:", error);
+      console.error('Error updating favorite status:', error);
     }
   };
 
-  const handleRenameNote = async (id) => {
-    if (!noteNameInput.trim()) return;
+  const handleToggleLock = () => {
+    setIsLocked(!isLocked);
+  };
 
-    const updatedNotes = notes.map((note) =>
-      note.noteId === id ? { ...note, title: noteNameInput } : note
-    );
-    setNotes(updatedNotes);
-    setIsEditing(null);
-    setNoteNameInput("");
-
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Authorization token is missing");
-        return;
-      }
-
-      const response = await fetch(
-        "http://localhost:3000/user-api/users/notes",
-        {
-          method: "PUT",
+  const handleDeleteNote = async () => {
+    const confirmDelete = window.confirm('Are you sure you want to move this note to trash?');
+    if (confirmDelete) {
+      try {
+        await fetch(`http://localhost:3000/user-api/users/notes/delete/${noteId}`, {
+          method: 'PUT',
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },
-          body: JSON.stringify({ notes: updatedNotes }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error(
-          "Failed to update note in backend:",
-          errorData.message || response.statusText
-        );
-      } else {
-        console.log("Note updated successfully");
+        });
+        alert('Note moved to trash.');
+        navigate('/notes');
+      } catch (error) {
+        console.error('Error moving note to trash:', error);
       }
-    } catch (error) {
-      console.error("Error updating note in backend:", error);
     }
   };
 
   return (
-    <div className="w-full">
-      <div className="">
-        <div className="flex items-center mt-6">
-          <div className="w-16 h-16 overflow-hidden">
-            <img
-              src={UserLogo}
-              width="45px"
-              alt="Profile"
-              className="rounded-full bg-[#41b3a2] py-2 px-2.5"
-            />
-          </div>
-          <div className="pb-5">
-            <h1 className="text-[#000000] text-2xl font-semibold">
-              {username}
-            </h1>
-          </div>
-        </div>
-
-        <SearchBar
-          onSearch={(searchTerm) => console.log("Searching for:", searchTerm)}
-        />
-
+    <div className="p-4">
+      <input
+        type="text"
+        value={noteTitle}
+        onChange={handleTitleChange}
+        placeholder="Enter note title"
+        className="w-full px-4 py-2 mb-2 border rounded-md focus:outline-none focus:ring focus:border-[#41b3a2]"
+      />
+      <div className="flex gap-2 mb-2">
         <button
-          onClick={handleNewNote}
-          className="w-full mt-4 py-2 bg-[#41b3a2] text-white font-semibold rounded-md shadow-md hover:bg-[#33a89f] transition duration-300"
+          onClick={handleAddTag}
+          className="px-3 py-1 bg-[#41b3a2] text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300"
         >
-          New Note
+          Add Tag
         </button>
-
-        <div className="flex flex-col p-0 mt-4 ms-7">
-          <Link
-            to="/profile/home"
-            className="flex text-xl font-semibold text-[#9e9e9e]"
-          >
-            <img src={homeicon} className="w-5 me-2" alt="Home Icon" /> Home
-          </Link>
+        {showTagOptions && (
+          <div className="absolute bg-white border border-gray-300 rounded-md shadow-lg mt-2">
+            {predefinedTags.map((tag) => (
+              <div
+                key={tag}
+                onClick={() => handleSelectTag(tag)}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              >
+                {tag}
+              </div>
+            ))}
+          </div>
+        )}
+        <button
+          onClick={handleToggleFavourite}
+          className={`px-3 py-1 ${isFavourite ? 'bg-yellow-400' : 'bg-[#41b3a2]'} text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300`}
+        >
+          {isFavourite ? 'Remove from Favourites' : 'Add to Favourites'}
+        </button>
+        <button
+          onClick={handleToggleLock}
+          className={`px-3 py-1 ${isLocked ? 'bg-red-500' : 'bg-[#41b3a2]'} text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300`}
+        >
+          {isLocked ? 'Unlock Note' : 'Lock Note'}
+        </button>
+        {!isNewNote && (
           <button
-            onClick={toggleFavoritesDropdown}
-            className="flex text-xl w-full mt-2 font-semibold text-[#9e9e9e]"
+            onClick={handleDeleteNote}
+            className="px-3 py-1 bg-red-600 text-white font-semibold rounded hover:bg-red-500 transition duration-300"
           >
-            <img
-              src={favouritesicon}
-              className="w-4 me-2 pt-2"
-              alt="Favourites Icon"
-            />{" "}
-            Favourites
+            Delete Note
           </button>
-          {showFavoritesDropdown && (
-            <ul className="pl-4 text-md font-semibold text-[#9e9e9e]">
-              {favoriteNotes.length > 0 ? (
-                favoriteNotes.map((note) => (
-                  <li key={note.id} className="flex items-center">
-                    <Link
-                      to={`/profile/favourites/${note.id}`}
-                      className="flex-grow"
-                    >
-                      {note.name}
-                    </Link>
-                  </li>
-                ))
-              ) : (
-                <li>No favorite notes available</li>
-              )}
-            </ul>
-          )}
-          <button
-            onClick={toggleNotesDropdown}
-            className="flex text-xl w-full mt-2 font-semibold text-[#9e9e9e]"
-          >
-            <img src={notesicon} className="w-4 me-2 pt-2" alt="Notes Icon" />{" "}
-            Notes
-          </button>
-          {showNotesDropdown && (
-            <ul className="pl-4 text-md font-semibold text-[#9e9e9e]">
-              {notes.length > 0 ? (
-                notes.map((note) => (
-                  <li key={note.noteId} className="flex items-center">
-                    {isEditing === note.noteId ? (
-                      <>
-                        <input
-                          value={noteNameInput}
-                          onChange={(e) => setNoteNameInput(e.target.value)}
-                          className="flex-grow px-2 py-1 border rounded"
-                        />
-                        <button
-                          onClick={() => handleRenameNote(note.noteId)}
-                          className="px-2 py-1 ml-1 bg-green-500 text-white rounded"
-                        >
-                          Save
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <Link
-                          to={`/profile/notes/${note.noteId}`}
-                          className="flex-grow"
-                        >
-                          {note.title}
-                        </Link>
-                        <button
-                          onClick={() => {
-                            setIsEditing(note.noteId);
-                            setNoteNameInput(note.title); // Populate input with current note title
-                          }}
-                          className="px-2 py-1 ml-1 bg-blue-500 text-white rounded"
-                        >
-                          Edit
-                        </button>
-                      </>
-                    )}
-                  </li>
-                ))
-              ) : (
-                <li>No notes available</li>
-              )}
-            </ul>
-          )}
-
-          {/* Tags Dropdown */}
-          <button
-            onClick={toggleTagsDropdown}
-            className="flex text-xl w-full mt-2 font-semibold text-[#9e9e9e]"
-          >
-            <img src={tagicon} className="w-4 me-2 pt-2" alt="Tags Icon" /> Tags
-          </button>
-          {showTagsDropdown && (
-            <ul className="pl-4 text-md font-semibold text-[#9e9e9e]">
-              {tags.length > 0 ? (
-                tags.map((tag) => (
-                  <li key={tag} className="flex items-center">
-                    <Link to={`/profile/tags/${tag}`} className="flex-grow">
-                      {tag}
-                    </Link>
-                  </li>
-                ))
-              ) : (
-                <li>No tags available</li>
-              )}
-            </ul>
-          )}
-
-          {/* Trash Dropdown */}
-          <button
-            onClick={toggleTrashDropdown}
-            className="flex text-xl w-full mt-2 font-semibold text-[#9e9e9e]"
-          >
-            <img src={trashicon} className="w-4 me-2 pt-2" alt="Trash Icon" />{" "}
-            Trash
-          </button>
-          {showTrashDropdown && (
-            <ul className="pl-4 text-md font-semibold text-[#9e9e9e]">
-              {trash.length > 0 ? (
-                trash.map((note) => (
-                  <li key={note.id} className="flex items-center">
-                    <Link to={`/profile/trash/${note.id}`} className="flex-grow">
-                      {note.name}
-                    </Link>
-                  </li>
-                ))
-              ) : (
-                <li>No notes in trash</li>
-              )}
-            </ul>
-          )}
-        </div>
+        )}
+      </div>
+      <textarea
+        value={noteText}
+        onChange={handleTextChange}
+        className="w-full h-96 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#41b3a2] focus:border-transparent"
+        placeholder="Enter your note content here..."
+        disabled={isLocked}
+      />
+      <div className="mt-2">
+        {tags.map((tag, index) => (
+          <span
+            key={index}
+            className="inline-flex items-center px-2 py-1 text-md bg-gray-200 rounded-full mr-2"
+            >
+            {tag}
+            <button
+              onClick={() => handleRemoveTag(tag)}
+              className="ml-2 text-red-700 text-2xl pb-0.5"
+              aria-label={`Remove ${tag}`}
+            >
+              &times;
+            </button>
+          </span>
+        ))}
       </div>
     </div>
   );
 }
 
-export default Sidebar;
+export default NoteDetail;

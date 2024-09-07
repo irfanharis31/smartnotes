@@ -109,7 +109,7 @@ function FavNoteDetail() {
     if (window.confirm('Are you sure you want to remove this note from favourites?')) {
       try {
         await fetch(`http://localhost:3000/user-api/users/notes/unfavorite/${noteId}`, {
-          method: 'PUT',
+          method: 'PUT', 
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },

@@ -26,7 +26,9 @@ function Sidebar() {
   const [selectedTag, setSelectedTag] = useState("");
   const [filteredNotes, setFilteredNotes] = useState([]);
   const [selectedTrashItemId, setSelectedTrashItemId] = useState(null);
-
+  const [showPersonalTagNotes, setShowPersonalTagNotes] = useState(false);
+  const [showWorkTagNotes, setShowWorkTagNotes] = useState(false);
+  
   const toggleNotesDropdown = () => setShowNotesDropdown(!showNotesDropdown);
   const toggleFavoritesDropdown = () => setShowFavoritesDropdown(!showFavoritesDropdown);
   const toggleTagsDropdown = () => setShowTagsDropdown(!showTagsDropdown);
@@ -179,22 +181,28 @@ function Sidebar() {
         console.error("Authorization token is missing");
         return;
       }
-
+  
       const response = await fetch(`http://localhost:3000/user-api/users/notes/undo-delete/${id}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        method: "PUT",  // Use PUT to match the backend route
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
-
+  
       if (response.ok) {
-        const updatedTrashData = trash.filter(item => item.id !== id);
-        setTrash(updatedTrashData);
+        console.log("Note restored successfully");
+        // Remove the note from the trash state
+        setTrash((prevTrash) => prevTrash.filter((item) => item.id !== id));
       } else {
-        console.error("Failed to restore note");
+        const errorText = await response.text();
+        console.error(`Failed to restore note: ${response.status} - ${errorText}`);
       }
     } catch (error) {
       console.error("Error restoring note:", error);
     }
   };
+  
 
   const handleDeletePermanently = async (id) => {
     try {
@@ -203,27 +211,46 @@ function Sidebar() {
         console.error("Authorization token is missing");
         return;
       }
-
-      const response = await fetch(`http://localhost:3000/user-api/users/notes/${id}`, {
+  
+      const response = await fetch(`http://localhost:3000/user-api/users/notes/permanent-delete/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
+  
       if (response.ok) {
-        const updatedTrashData = trash.filter(item => item.id !== id);
+        // Assuming 'trash' is your state variable containing deleted notes
+        const updatedTrashData = trash.filter((item) => item.id !== id);
         setTrash(updatedTrashData);
+        console.log("Note deleted permanently");
       } else {
-        console.error("Failed to delete note permanently");
+        console.error("Failed to delete note permanently:", await response.text());
       }
     } catch (error) {
       console.error("Error deleting note permanently:", error);
     }
   };
+  
 
   const handleOptionClick = (id) => {
     setSelectedTrashItemId(selectedTrashItemId === id ? null : id);
   };
 
+
+  const handleTagCategoryClick = (category) => {
+    if (category === "Personal") {
+      setShowPersonalTagNotes(true);
+      setShowWorkTagNotes(false);
+      setSelectedTag("Personal");
+    } else if (category === "Work") {
+      setShowPersonalTagNotes(false);
+      setShowWorkTagNotes(true);
+      setSelectedTag("Work");
+    }
+  };
   return (
     <div className="w-full">
       <div>
@@ -337,58 +364,52 @@ function Sidebar() {
               ))}
             </ul>
           )}
-  
-          <button
-            onClick={toggleTagsDropdown}
-            className="flex text-xl w-full mt-2 font-semibold text-[#9e9e9e]"
-          >
-            <img src={tagicon} className="w-4 me-2 pt-2" alt="Tags Icon" /> Tags
-          </button>
-  
-          {showTagsDropdown && (
-            <div className="pl-4 text-md font-semibold text-[#9e9e9e]">
-              <button
-                onClick={toggleTagCategoriesDropdown}
-                className="flex items-center"
-              >
-                Categories
-              </button>
-              {showTagCategoriesDropdown && (
-                <ul className="pl-4">
-                  {tags.length > 0 ? (
-                    tags.map((tag) => (
-                      <li key={tag.id} className="flex items-center">
-                        <button
-                          onClick={() => setSelectedTag(tag.name)}
-                          className="flex-grow"
-                        >
-                          {tag.name}
-                        </button>
-                      </li>
-                    ))
-                  ) : (
-                    <li>No tags available</li>
-                  )}
-                </ul>
-              )}
-            </div>
-          )}
-  
-          {selectedTag && (
-            <ul className="pl-4 text-md font-semibold text-[#9e9e9e]">
-              {filteredNotes.length > 0 ? (
-                filteredNotes.map((note) => (
-                  <li key={note.noteId} className="flex items-center">
-                    <Link to={`/profile/notes/${note.noteId}`} className="flex-grow">
+   <button
+          onClick={toggleTagsDropdown}
+          className="flex text-xl w-full mt-2 font-semibold text-[#9e9e9e]"
+        >
+          <img src={tagicon} className="w-4 me-2 pt-2" alt="Tags Icon" /> Tags
+        </button>
+        {showTagsDropdown && (
+          <div className="pl-4 text-md font-semibold text-[#9e9e9e]">
+            <button
+              onClick={() => handleTagCategoryClick("Personal")}
+              className="flex items-center mt-2"
+            >
+              Personal
+            </button>
+            <button
+              onClick={() => handleTagCategoryClick("Work")}
+              className="flex items-center mt-2"
+            >
+              Work
+            </button>
+
+            {showPersonalTagNotes && (
+              <ul className="pl-4 mt-2">
+                {filteredNotes.filter(note => note.tags.includes("Personal")).map((note) => (
+                  <li key={note.noteId} className="flex items-center mt-1">
+                    <Link to={`/profile/notes/${note.noteId}`} className="flex-grow text-left">
                       {note.title || "Untitled Note"}
                     </Link>
                   </li>
-                ))
-              ) : (
-                <li>No notes available for selected tag</li>
-              )}
-            </ul>
-          )}
+                ))}
+              </ul>
+            )}
+
+            {showWorkTagNotes && (
+              <ul className="pl-4 mt-2">
+                {filteredNotes.filter(note => note.tags.includes("Work")).map((note) => (
+                  <li key={note.noteId} className="flex items-center mt-1">
+                    <Link to={`/profile/notes/${note.noteId}`} className="flex-grow text-left">
+                      {note.title || "Untitled Note"}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
   
           <button
             onClick={toggleTrashDropdown}
