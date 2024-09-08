@@ -273,26 +273,38 @@ function Sidebar() {
   return (
     <div className="w-full">
       <div>
-      <div className="relative flex items-center mt-6">
-  <div className="w-16 h-16 overflow-hidden">
-    <img
-      src={UserLogo}
-      width="45px"
-      alt="Profile"
-      className="rounded-full bg-[#41b3a2] py-2 px-2.5"
-    />
-  </div>
-  <div className="flex items-center ml-4">
-    <span className="username text-3xl">{username}</span>
-    <MdKeyboardArrowDown
-      className="dropdown-icon text-2xl ml-2 cursor-pointer"
-      onClick={toggleLogoutMenu}
-    />
-    {showLogoutMenu && (
-      <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg">
-        {confirmLogout ? (
-          <div className="p-4 text-center">
-            <p className="mb-4">Are you sure you want to log out?</p>
+      <div className="flex mt-6 relative">
+      <div className="w-16 h-16 overflow-hidden">
+        <img
+          src={UserLogo}
+          width="45px"
+          alt="Profile"
+          className="rounded-full bg-[#41b3a2] py-2 px-2.5"
+        />
+      </div>
+      <div className="flex items-center">
+        <span className="username text-3xl mb-5">{username}</span>
+        <MdKeyboardArrowDown
+          className="dropdown-icon text-2xl ml-20 border rounded-full bg-gray-200 mb-4 cursor-pointer"
+          onClick={toggleLogoutMenu}
+        />
+        {showLogoutMenu && (
+          <div className="absolute right-0 mt-8 w-48 bg-white border rounded shadow-lg">
+            <button
+              className="w-full py-2 px-4 text-left hover:bg-gray-200"
+              onClick={handleConfirmLogout}
+            >
+              Log out
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Centralized Logout Confirmation Modal */}
+      {confirmLogout && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded shadow-lg">
+            <p className="mb-4 text-center">Are you sure you want to log out?</p>
             <div className="flex justify-center gap-4">
               <button
                 className="bg-red-500 text-white py-2 px-4 rounded"
@@ -308,39 +320,9 @@ function Sidebar() {
               </button>
             </div>
           </div>
-        ) : (
-          <button
-            className="w-full py-2 px-4 text-left hover:bg-gray-200"
-            onClick={handleConfirmLogout}
-          >
-            Log out
-          </button>
-        )}
-      </div>
-    )}
-  </div>
-  {showLogoutMenu && confirmLogout && (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-      <div className="bg-white p-6 rounded shadow-lg">
-        <p className="mb-4 text-center">Are you sure you want to log out?</p>
-        <div className="flex justify-center gap-4">
-          <button
-            className="bg-red-500 text-white py-2 px-4 rounded"
-            onClick={handleLogout}
-          >
-            Yes
-          </button>
-          <button
-            className="bg-gray-300 text-black py-2 px-4 rounded"
-            onClick={handleCancelLogout}
-          >
-            No
-          </button>
         </div>
-      </div>
+      )}
     </div>
-  )}
-</div>
 
   
         <SearchBar onSearch={(searchTerm) => console.log("Searching for:", searchTerm)} />
