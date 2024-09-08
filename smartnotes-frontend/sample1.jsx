@@ -31,21 +31,15 @@ function Sidebar() {
   const [showWorkTagNotes, setShowWorkTagNotes] = useState(false);
   const [showLogoutMenu, setShowLogoutMenu] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
-    const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
-    const [showChangePassModal, setShowChangePassModal] = useState(false);
-
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [passwordChangeError, setPasswordChangeError] = useState("");
-  const [currentPass, setCurrentPass] = useState("");
-  const [newPass, setNewPass] = useState("");
-  const [confirmNewPass, setConfirmNewPass] = useState("");
-  const [passChangeError, setPassChangeError] = useState("");
 
   const toggleNotesDropdown = () => setShowNotesDropdown(!showNotesDropdown);
   const toggleFavoritesDropdown = () => setShowFavoritesDropdown(!showFavoritesDropdown);
   const toggleTagsDropdown = () => setShowTagsDropdown(!showTagsDropdown);
+  const toggleTagCategoriesDropdown = () => setShowTagCategoriesDropdown(!showTagCategoriesDropdown);
   const toggleTrashDropdown = () => setShowTrashDropdown(!showTrashDropdown);
   const toggleLogoutMenu = () => setShowLogoutMenu(!showLogoutMenu);
 
@@ -67,10 +61,6 @@ function Sidebar() {
   const handleToggleChangePasswordModal = () => {
     setShowChangePasswordModal(!showChangePasswordModal);
     setPasswordChangeError("");
-  };
-  const handleToggleChangePassModal = () => {
-    setShowChangePassModal(!showChangePassModal);
-    setPassChangeError("");
   };
 
   const handleChangePassword = async () => {
@@ -111,47 +101,6 @@ function Sidebar() {
       }
     } catch (error) {
       setPasswordChangeError("Error changing password. Please try again.");
-      console.error("Error changing notes password:", error);
-    }
-  };
-  const handleChangePass = async () => {
-    if (newPass !== confirmNewPass) {
-      setPassChangeError("New passwords do not match.");
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Authorization token is missing");
-        return;
-      }
-
-      const response = await fetch("http://localhost:3000/user-api/users/change-password", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          oldPass: currentPass,
-          newPass,
-          confirmNewPass,
-        }),
-      });
-
-      if (response.ok) {
-        alert("Password changed successfully.");
-        setShowChangePassModal(false);
-        setCurrentPass("");
-        setNewPass("");
-        setConfirmNewPass("");
-      } else {
-        const errorData = await response.json();
-        setPassChangeError(errorData.message || "Failed to change password.");
-      }
-    } catch (error) {
-      setPassChangeError("Error changing password. Please try again.");
       console.error("Error changing notes password:", error);
     }
   };
@@ -393,16 +342,10 @@ function Sidebar() {
          {showLogoutMenu && (
             <ul className="absolute bg-white shadow-lg rounded mt-2 w-40 right-0">
               <li
-                onClick={handleToggleChangePassModal}
-                className="py-2 px-4 cursor-pointer hover:bg-gray-100"
-              >
-                Change Password
-              </li>
-              <li
                 onClick={handleToggleChangePasswordModal}
                 className="py-2 px-4 cursor-pointer hover:bg-gray-100"
               >
-                Change NotesPassword
+                Change Password
               </li>
               <li
                 onClick={handleConfirmLogout}
@@ -437,51 +380,6 @@ function Sidebar() {
         </div>
       )}
 
-      {showChangePassModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-4 rounded shadow-lg">
-            <h3 className="mb-4 text-lg font-bold">Change Password</h3>
-            <input
-              type="password"
-              placeholder="Current Password"
-              value={currentPass}
-              onChange={(e) => setCurrentPass(e.target.value)}
-              className="w-full mb-2 p-2 border rounded"
-            />
-            <input
-              type="password"
-              placeholder="New Password"
-              value={newPass}
-              onChange={(e) => setNewPass(e.target.value)}
-              className="w-full mb-2 p-2 border rounded"
-            />
-            <input
-              type="password"
-              placeholder="Confirm New Password"
-              value={confirmNewPass}
-              onChange={(e) => setConfirmNewPass(e.target.value)}
-              className="w-full mb-2 p-2 border rounded"
-            />
-            {passChangeError && (
-              <p className="text-red-500 text-sm">{passChangeError}</p>
-            )}
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={handleToggleChangePassModal}
-                className="px-4 py-2 mr-2 text-white bg-gray-600 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleChangePass}
-                className="px-4 py-2 text-white bg-blue-600 rounded"
-              >
-                Change Password
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       {showChangePasswordModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded shadow-lg">
@@ -521,7 +419,7 @@ function Sidebar() {
                 onClick={handleChangePassword}
                 className="px-4 py-2 text-white bg-blue-600 rounded"
               >
-                Change NotesPassword
+                Change Password
               </button>
             </div>
           </div>
