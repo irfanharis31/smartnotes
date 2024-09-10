@@ -21,6 +21,9 @@ function NoteDetail() {
   const [isLocked, setIsLocked] = useState(false);
   const [isNewNote, setIsNewNote] = useState(!noteId);
   const [showTagOptions, setShowTagOptions] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [enteredPassword, setEnteredPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const predefinedTags = ['Personal', 'Work'];
 
@@ -55,29 +58,31 @@ function NoteDetail() {
   }, [noteId]);
 
   useEffect(() => {
-    const autoSaveNote = debounce(async () => {
-      try {
-        await fetch(`http://localhost:3000/user-api/users/notes/${noteId}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            title: noteTitle,
-            content: noteText,
-            tags,
-            isFavorite: isFavourite,
-            isLocked,
-          }),
-        });
-        console.log('Note auto-saved successfully!');
-      } catch (error) {
-        console.error('Error auto-saving note:', error);
-      }
-    }, 1000); // Delay of 1 second
+    if (!isLocked) {
+      const autoSaveNote = debounce(async () => {
+        try {
+          await fetch(`http://localhost:3000/user-api/users/notes/${noteId}`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              title: noteTitle,
+              content: noteText,
+              tags,
+              isFavorite: isFavourite,
+              isLocked,
+            }),
+          });
+          console.log('Note auto-saved successfully!');
+        } catch (error) {
+          console.error('Error auto-saving note:', error);
+        }
+      }, 1000); // Delay of 1 second
 
-    autoSaveNote();
+      autoSaveNote();
+    }
   }, [noteText, noteTitle, tags, isFavourite, isLocked, noteId]);
 
   const handleTitleChange = (e) => {
@@ -114,12 +119,12 @@ function NoteDetail() {
       console.error('Error updating favorite status:', error);
     }
   };
-   
+
   const handleRemoveFromFavourites = async () => {
     if (window.confirm('Are you sure you want to remove this note from favourites?')) {
       try {
         await fetch(`http://localhost:3000/user-api/users/notes/unfavorite/${noteId}`, {
-          method: 'PUT', 
+          method: 'PUT',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },
@@ -133,8 +138,59 @@ function NoteDetail() {
   };
 
   const handleToggleLock = () => {
-    setIsLocked(!isLocked);
+    if (isLocked) {
+      setShowPasswordModal(true);
+    } else {
+      setIsLocked(true);
+    }
   };
+
+  const handlePasswordSubmit = async () => {
+    try {
+        // Fetch the stored notes password from the backend
+        const userResponse = await fetch('http://localhost:3000/user-api/users/profile', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        const userData = await userResponse.json();
+
+        if (!userData.success) {
+            setPasswordError('Failed to fetch user data.');
+            return;
+        }
+
+        console.log('Fetched notesPassword:', userData.notesPassword); // Debug log
+
+        // Compare the entered password with the stored notes password
+        const isPasswordMatch = await fetch('http://localhost:3000/user-api/users/notes/verify-password', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ password: enteredPassword, notesPassword: userData.notesPassword }),
+        });
+        const result = await isPasswordMatch.json();
+
+        console.log('Password verification result:', result); // Debug log
+
+        if (result.success) {
+            setIsLocked(false);
+            setShowPasswordModal(false);
+            setPasswordError('');
+        } else {
+            setPasswordError('Incorrect password. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error verifying password:', error);
+        setPasswordError('An error occurred while verifying the password.');
+    }
+};
+
+
 
   const handleDeleteNote = async () => {
     const confirmDelete = window.confirm('Are you sure you want to move this note to trash?');
@@ -183,7 +239,7 @@ function NoteDetail() {
             ))}
           </div>
         )}
-          {isFavourite ? (
+        {isFavourite ? (
           <button
             onClick={handleRemoveFromFavourites}
             className="px-3 py-1 bg-red-600 text-white font-semibold rounded hover:bg-red-500 transition duration-300"
@@ -213,14 +269,17 @@ function NoteDetail() {
           </button>
         )}
       </div>
-      <textarea
-        value={noteText}
-        onChange={handleTextChange}
-        className="w-full h-96 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#41b3a2] focus:border-transparent"
-        placeholder="Enter your note content here..."
-        disabled={isLocked}
-      />
-      <div className="mt-2">
+      {isLocked ? (
+        <p className="text-gray-500 italic">This note is locked. Enter the password to unlock and view the content.</p>
+      ) : (
+        <textarea
+          value={noteText}
+          onChange={handleTextChange}
+          placeholder="Enter note content"
+          className="w-full h-screen border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#41b3a2] focus:border-[#33a89f] resize-none"
+          />
+      )}
+         <div className="mt-2">
         {tags.map((tag, index) => (
           <span
             key={index}
@@ -237,6 +296,35 @@ function NoteDetail() {
           </span>
         ))}
       </div>
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-md shadow-lg">
+            <h2 className="text-lg font-bold mb-4">Enter Notes Password</h2>
+            <input
+              type="password"
+              value={enteredPassword}
+              onChange={(e) => setEnteredPassword(e.target.value)}
+              className="w-full px-4 py-2 mb-4 border rounded-md focus:outline-none focus:ring focus:border-[#41b3a2]"
+              placeholder="Enter password"
+            />
+            {passwordError && <p className="text-red-500">{passwordError}</p>}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                className="px-3 py-1 bg-gray-300 text-black font-semibold rounded hover:bg-gray-400 transition duration-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePasswordSubmit}
+                className="px-3 py-1 bg-[#41b3a2] text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
