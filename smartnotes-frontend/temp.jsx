@@ -44,7 +44,10 @@ function NoteDetail() {
             setNoteText(data.content || '');
             setTags(data.tags || []);
             setIsFavourite(data.isFavorite || false);
-            setIsLocked(data.isLocked || false);
+            
+            // Retrieve locked state from backend or localStorage
+            const lockedState = data.isLocked || JSON.parse(localStorage.getItem(`isLocked-${noteId}`));
+            setIsLocked(lockedState);
           } else {
             console.error('Note ID mismatch');
           }
@@ -142,6 +145,7 @@ function NoteDetail() {
       setShowPasswordModal(true);
     } else {
       setIsLocked(true);
+      localStorage.setItem(`isLocked-${noteId}`, JSON.stringify(true));
     }
   };
 
@@ -162,8 +166,6 @@ function NoteDetail() {
             return;
         }
 
-        console.log('Fetched notesPassword:', userData.notesPassword); // Debug log
-
         // Compare the entered password with the stored notes password
         const isPasswordMatch = await fetch('http://localhost:3000/user-api/users/notes/verify-password', {
             method: 'POST',
@@ -175,10 +177,9 @@ function NoteDetail() {
         });
         const result = await isPasswordMatch.json();
 
-        console.log('Password verification result:', result); // Debug log
-
         if (result.success) {
             setIsLocked(false);
+            localStorage.setItem(`isLocked-${noteId}`, JSON.stringify(false)); // Persist unlocked state
             setShowPasswordModal(false);
             setPasswordError('');
         } else {
@@ -188,9 +189,7 @@ function NoteDetail() {
         console.error('Error verifying password:', error);
         setPasswordError('An error occurred while verifying the password.');
     }
-};
-
-
+  };
 
   const handleDeleteNote = async () => {
     const confirmDelete = window.confirm('Are you sure you want to move this note to trash?');
@@ -242,44 +241,43 @@ function NoteDetail() {
         {isFavourite ? (
           <button
             onClick={handleRemoveFromFavourites}
-            className="px-3 py-1 bg-red-600 text-white font-semibold rounded hover:bg-red-500 transition duration-300"
+            className="px-3 py-1 bg-red-600 text-white font-semibold rounded hover:bg-red-700 transition duration-300"
           >
-            Remove from Favourites
+            Remove from Favourite
           </button>
         ) : (
           <button
             onClick={handleToggleFavourite}
-            className="px-3 py-1 bg-[#41b3a2] text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300"
+            className="px-3 py-1 bg-yellow-500 text-white font-semibold rounded hover:bg-yellow-600 transition duration-300"
           >
-            Add to Favourites
+            Add to Favourite
           </button>
         )}
         <button
           onClick={handleToggleLock}
-          className={`px-3 py-1 ${isLocked ? 'bg-red-500' : 'bg-[#41b3a2]'} text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300`}
+          className={`px-3 py-1 ${isLocked ? 'bg-gray-600' : 'bg-blue-600'} text-white font-semibold rounded hover:bg-blue-700 transition duration-300`}
         >
-          {isLocked ? 'Unlock Note' : 'Lock Note'}
+          {isLocked ? 'Unlock' : 'Lock'}
         </button>
-        {!isNewNote && (
-          <button
-            onClick={handleDeleteNote}
-            className="px-3 py-1 bg-red-600 text-white font-semibold rounded hover:bg-red-500 transition duration-300"
-          >
-            Delete Note
-          </button>
-        )}
+        <button
+          onClick={handleDeleteNote}
+          className="px-3 py-1 bg-red-600 text-white font-semibold rounded hover:bg-red-700 transition duration-300"
+        >
+          Move to Trash
+        </button>
       </div>
       {isLocked ? (
         <p className="text-gray-500 italic">This note is locked. Enter the password to unlock and view the content.</p>
       ) : (
         <textarea
-          value={noteText}
-          onChange={handleTextChange}
-          placeholder="Enter note content"
-          className="w-full h-screen border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#41b3a2] focus:border-[#33a89f] resize-none"
-          />
+        value={noteText}
+        onChange={handleTextChange}
+        placeholder="Enter note content"
+        className="w-full h-screen border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#41b3a2] focus:border-[#33a89f] resize-none overflow-hidden"
+      />
+      
       )}
-         <div className="mt-2">
+       <div className="mt-2">
         {tags.map((tag, index) => (
           <span
             key={index}
@@ -297,31 +295,23 @@ function NoteDetail() {
         ))}
       </div>
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-md shadow-lg">
-            <h2 className="text-lg font-bold mb-4">Enter Notes Password</h2>
+            <h2 className="text-lg font-semibold mb-4">Enter Password to Unlock Note</h2>
             <input
               type="password"
               value={enteredPassword}
               onChange={(e) => setEnteredPassword(e.target.value)}
               className="w-full px-4 py-2 mb-4 border rounded-md focus:outline-none focus:ring focus:border-[#41b3a2]"
-              placeholder="Enter password"
+              placeholder="Enter your notes password"
             />
-            {passwordError && <p className="text-red-500">{passwordError}</p>}
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowPasswordModal(false)}
-                className="px-3 py-1 bg-gray-300 text-black font-semibold rounded hover:bg-gray-400 transition duration-300"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handlePasswordSubmit}
-                className="px-3 py-1 bg-[#41b3a2] text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300"
-              >
-                Submit
-              </button>
-            </div>
+            {passwordError && <p className="text-red-600 mb-2">{passwordError}</p>}
+            <button
+              onClick={handlePasswordSubmit}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-300"
+            >
+              Submit
+            </button>
           </div>
         </div>
       )}

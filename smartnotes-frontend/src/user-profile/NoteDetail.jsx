@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState,useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 // Debounce utility function
@@ -26,6 +26,7 @@ function NoteDetail() {
   const [passwordError, setPasswordError] = useState('');
 
   const predefinedTags = ['Personal', 'Work'];
+  const editorRef = useRef(null);
 
   useEffect(() => {
     if (noteId) {
@@ -210,6 +211,27 @@ function NoteDetail() {
     }
   };
 
+  const applyFormatting = (command, value = null) => {
+    if (document.queryCommandSupported(command)) {
+      document.execCommand(command, false, value);
+      if (editorRef.current) {
+        setNoteText(editorRef.current.innerHTML);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.innerHTML = noteText;
+    }
+  }, [noteText]);
+
+  const handleInput = () => {
+    if (editorRef.current) {
+      setNoteText(editorRef.current.innerHTML);
+    }
+  };
+
   return (
     <div className="p-4">
       <input
@@ -269,16 +291,7 @@ function NoteDetail() {
           </button>
         )}
       </div>
-      {isLocked ? (
-        <p className="text-gray-500 italic">This note is locked. Enter the password to unlock and view the content.</p>
-      ) : (
-        <textarea
-          value={noteText}
-          onChange={handleTextChange}
-          placeholder="Enter note content"
-          className="w-full h-screen border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#41b3a2] focus:border-[#33a89f] resize-none"
-          />
-      )}
+     
          <div className="mt-2">
         {tags.map((tag, index) => (
           <span
@@ -296,6 +309,42 @@ function NoteDetail() {
           </span>
         ))}
       </div>
+
+      <div className="flex gap-2 mb-2">
+        <button
+          onClick={() => applyFormatting('bold')}
+          className="px-2 py-1 border rounded-md font-semibold text-gray-700 hover:bg-gray-200"
+        >
+          Bold
+        </button>
+        <button
+          onClick={() => applyFormatting('italic')}
+          className="px-2 py-1 border rounded-md font-semibold text-gray-700 hover:bg-gray-200"
+        >
+          Italic
+        </button>
+        <button
+          onClick={() => applyFormatting('backColor', 'yellow')}
+          className="px-2 py-1 border rounded-md font-semibold text-gray-700 hover:bg-gray-200"
+        >
+          Highlight
+        </button>
+      </div>
+   
+      {isLocked ? (
+        <p className="text-gray-500 italic">This note is locked. Enter the password to unlock and view the content.</p>
+      ) : (
+        <div
+        id="note-editor"
+        contentEditable={!isLocked}
+        onInput={handleInput}
+        className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:border-[#41b3a2] min-h-[200px] text-left"
+      >
+        {noteText}
+      </div>
+      
+      )}
+
       {showPasswordModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-md shadow-lg">
