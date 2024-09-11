@@ -1,6 +1,34 @@
-import React, { useState,useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
+
+// Quill modules and formats
+const modules = {
+  toolbar: {
+    container: [
+      [{ 'header': '1'}, {'header': '2'}, { 'font': [] }],
+      [{size: []}],
+      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+      [{ 'list': 'ordered'}, { 'list': 'bullet'}, 
+       { 'indent': '-1'}, { 'indent': '+1' }],
+      ['link', 'image'], // Added image button
+      [{ 'color': [] }, { 'background': [] }], // Added background color
+      ['clean']                                         
+    ],
+    // handlers: {
+    //   image: handleImageUpload // Custom handler for image upload
+    // }
+  },
+};
+
+const formats = [
+  'header', 'font', 'size',
+  'bold', 'italic', 'underline', 'strike', 'blockquote',
+  'list', 'bullet', 'indent',
+  'link', 'image', 'color', 'background'
+];
 // Debounce utility function
 const debounce = (func, delay) => {
   let timeoutId;
@@ -26,7 +54,6 @@ function NoteDetail() {
   const [passwordError, setPasswordError] = useState('');
 
   const predefinedTags = ['Personal', 'Work'];
-  const editorRef = useRef(null);
 
   useEffect(() => {
     if (noteId) {
@@ -90,8 +117,8 @@ function NoteDetail() {
     setNoteTitle(e.target.value);
   };
 
-  const handleTextChange = (e) => {
-    setNoteText(e.target.value);
+  const handleTextChange = (content) => {
+    setNoteText(content);
   };
 
   const handleAddTag = () => {
@@ -211,26 +238,6 @@ function NoteDetail() {
     }
   };
 
-  const applyFormatting = (command, value = null) => {
-    if (document.queryCommandSupported(command)) {
-      document.execCommand(command, false, value);
-      if (editorRef.current) {
-        setNoteText(editorRef.current.innerHTML);
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.innerHTML = noteText;
-    }
-  }, [noteText]);
-
-  const handleInput = () => {
-    if (editorRef.current) {
-      setNoteText(editorRef.current.innerHTML);
-    }
-  };
 
   return (
     <div className="p-4">
@@ -310,39 +317,17 @@ function NoteDetail() {
         ))}
       </div>
 
-      <div className="flex gap-2 mb-2">
-        <button
-          onClick={() => applyFormatting('bold')}
-          className="px-2 py-1 border rounded-md font-semibold text-gray-700 hover:bg-gray-200"
-        >
-          Bold
-        </button>
-        <button
-          onClick={() => applyFormatting('italic')}
-          className="px-2 py-1 border rounded-md font-semibold text-gray-700 hover:bg-gray-200"
-        >
-          Italic
-        </button>
-        <button
-          onClick={() => applyFormatting('backColor', 'yellow')}
-          className="px-2 py-1 border rounded-md font-semibold text-gray-700 hover:bg-gray-200"
-        >
-          Highlight
-        </button>
-      </div>
+
    
       {isLocked ? (
         <p className="text-gray-500 italic">This note is locked. Enter the password to unlock and view the content.</p>
       ) : (
-        <div
-        id="note-editor"
-        contentEditable={!isLocked}
-        onInput={handleInput}
-        className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:border-[#41b3a2] min-h-[200px] text-left"
-      >
-        {noteText}
-      </div>
-      
+        <ReactQuill
+        value={noteText}
+        onChange={handleTextChange}
+        modules={modules}
+        formats={formats}
+      /> 
       )}
 
       {showPasswordModal && (
