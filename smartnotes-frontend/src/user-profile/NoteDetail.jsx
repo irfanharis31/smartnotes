@@ -1,35 +1,36 @@
 import React, { useState, useEffect } from 'react';
+import ReactQuill, { Quill } from 'react-quill';
 import { useParams, useNavigate } from 'react-router-dom';
-import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import ImageResize from 'quill-image-resize-module-react';
 
+// Register the ImageResize module with Quill
+Quill.register('modules/imageResize', ImageResize);
 
-// Quill modules and formats
+// Define Quill modules and formats
 const modules = {
   toolbar: {
     container: [
-      [{ 'header': '1'}, {'header': '2'}, { 'font': [] }],
-      [{size: []}],
+      [{ 'header': '1'}, { 'header': '2'}, { 'font': [] }],
+      [{ size: [] }],
       ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-      [{ 'list': 'ordered'}, { 'list': 'bullet'}, 
-       { 'indent': '-1'}, { 'indent': '+1' }],
-      ['link', 'image'], // Added image button
-      [{ 'color': [] }, { 'background': [] }], // Added background color
-      ['clean']                                         
-    ],
-    // handlers: {
-    //   image: handleImageUpload // Custom handler for image upload
-    // }
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'indent': '-1'}, { 'indent': '+1' }],
+      ['link', 'image'], // Includes image button
+      [{ 'color': [] }, { 'background': [] }], // Includes background color options
+      ['clean']
+    ]
   },
+  imageResize: {
+    modules: ['Resize', 'DisplaySize', 'Toolbar']
+  }
 };
-
 const formats = [
   'header', 'font', 'size',
   'bold', 'italic', 'underline', 'strike', 'blockquote',
   'list', 'bullet', 'indent',
   'link', 'image', 'color', 'background'
 ];
-// Debounce utility function
+
 const debounce = (func, delay) => {
   let timeoutId;
   return (...args) => {
@@ -50,8 +51,13 @@ function NoteDetail() {
   const [isNewNote, setIsNewNote] = useState(!noteId);
   const [showTagOptions, setShowTagOptions] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [enteredPassword, setEnteredPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [passwordChangeError, setPasswordChangeError] = useState('');
 
   const predefinedTags = ['Personal', 'Work'];
 
@@ -65,7 +71,6 @@ function NoteDetail() {
             },
           });
           const data = await response.json();
-
           if (data.noteId === noteId) {
             setNote(data);
             setNoteTitle(data.title || '');
@@ -136,35 +141,35 @@ function NoteDetail() {
 
   const handleToggleFavourite = async () => {
     try {
-      await fetch(`http://localhost:3000/user-api/users/notes/favorite/${noteId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      setIsFavourite(!isFavourite);
-    } catch (error) {
-      console.error('Error updating favorite status:', error);
-    }
-  };
-
-  const handleRemoveFromFavourites = async () => {
-    if (window.confirm('Are you sure you want to remove this note from favourites?')) {
-      try {
-        await fetch(`http://localhost:3000/user-api/users/notes/unfavorite/${noteId}`, {
+      const response = await fetch(
+        isFavourite 
+          ? `http://localhost:3000/user-api/users/notes/unfavorite/${noteId}` 
+          : `http://localhost:3000/user-api/users/notes/favorite/${noteId}`, 
+        {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },
-        });
-        setIsFavourite(false);
-        alert('Note removed from favourites.');
-      } catch (error) {
-        console.error('Error removing note from favourites:', error);
+        }
+      );
+  
+      if (response.ok) {
+        // Toggle the favourite status in the local state
+        setIsFavourite(!isFavourite);
+  
+        // Re-fetch the list of favourite notes after updating the status
+        fetchFavouriteNotes();
+  
+        const action = isFavourite ? 'removed from' : 'added to';
+        alert(`Note ${action} favourites successfully!`);
+      } else {
+        console.error('Failed to update favourite status.');
       }
+    } catch (error) {
+      console.error('Error updating favourite status:', error);
     }
   };
-
+  
   const handleToggleLock = () => {
     if (isLocked) {
       setShowPasswordModal(true);
@@ -175,7 +180,6 @@ function NoteDetail() {
 
   const handlePasswordSubmit = async () => {
     try {
-        // Fetch the stored notes password from the backend
         const userResponse = await fetch('http://localhost:3000/user-api/users/profile', {
             method: 'GET',
             headers: {
@@ -190,9 +194,6 @@ function NoteDetail() {
             return;
         }
 
-        console.log('Fetched notesPassword:', userData.notesPassword); // Debug log
-
-        // Compare the entered password with the stored notes password
         const isPasswordMatch = await fetch('http://localhost:3000/user-api/users/notes/verify-password', {
             method: 'POST',
             headers: {
@@ -202,8 +203,6 @@ function NoteDetail() {
             body: JSON.stringify({ password: enteredPassword, notesPassword: userData.notesPassword }),
         });
         const result = await isPasswordMatch.json();
-
-        console.log('Password verification result:', result); // Debug log
 
         if (result.success) {
             setIsLocked(false);
@@ -217,8 +216,6 @@ function NoteDetail() {
         setPasswordError('An error occurred while verifying the password.');
     }
 };
-
-
 
   const handleDeleteNote = async () => {
     const confirmDelete = window.confirm('Are you sure you want to move this note to trash?');
@@ -238,9 +235,46 @@ function NoteDetail() {
     }
   };
 
+  const handleToggleChangePasswordModal = () => {
+    setShowChangePasswordModal(!showChangePasswordModal);
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmNewPassword) {
+      setPasswordChangeError('New passwords do not match.');
+      return;
+    }
+    
+    try {
+      const response = await fetch('http://localhost:3000/user-api/users/change-password', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      });
+      const result = await response.json();
+      if (result.success) {
+        alert('Password changed successfully.');
+        setShowChangePasswordModal(false);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+      } else {
+        setPasswordChangeError(result.message || 'Failed to change password.');
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      setPasswordChangeError('An error occurred while changing the password.');
+    }
+  };
 
   return (
-    <div className="p-4">
+    <div className="relative p-4">
       <input
         type="text"
         value={noteTitle}
@@ -268,21 +302,15 @@ function NoteDetail() {
             ))}
           </div>
         )}
-        {isFavourite ? (
-          <button
-            onClick={handleRemoveFromFavourites}
-            className="px-3 py-1 bg-red-600 text-white font-semibold rounded hover:bg-red-500 transition duration-300"
-          >
-            Remove from Favourites
-          </button>
-        ) : (
-          <button
-            onClick={handleToggleFavourite}
-            className="px-3 py-1 bg-[#41b3a2] text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300"
-          >
-            Add to Favourites
-          </button>
-        )}
+   <button 
+  onClick={handleToggleFavourite} 
+  className={`px-4 py-2 font-semibold text-white rounded-md transition-colors duration-300 
+    ${isFavourite ? 'bg-red-500 hover:bg-red-600' : 'bg-[#41b3a2]'} 
+    `}
+>
+  {isFavourite ? 'Remove from Favourites' : 'Add to Favourites'}
+</button>
+
         <button
           onClick={handleToggleLock}
           className={`px-3 py-1 ${isLocked ? 'bg-red-500' : 'bg-[#41b3a2]'} text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300`}
@@ -299,7 +327,7 @@ function NoteDetail() {
         )}
       </div>
      
-         <div className="mt-2">
+      <div className="mt-2">
         {tags.map((tag, index) => (
           <span
             key={index}
@@ -317,21 +345,21 @@ function NoteDetail() {
         ))}
       </div>
 
-
-   
       {isLocked ? (
         <p className="text-gray-500 italic">This note is locked. Enter the password to unlock and view the content.</p>
       ) : (
         <ReactQuill
-        value={noteText}
-        onChange={handleTextChange}
-        modules={modules}
-        formats={formats}
-      /> 
+          value={noteText}
+          onChange={handleTextChange}
+          modules={modules}
+          formats={formats}
+          placeholder="Write your note here..."
+          className='mt-3'
+        /> 
       )}
 
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-md shadow-lg">
             <h2 className="text-lg font-bold mb-4">Enter Notes Password</h2>
             <input
@@ -354,6 +382,52 @@ function NoteDetail() {
                 className="px-3 py-1 bg-[#41b3a2] text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300"
               >
                 Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showChangePasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-md shadow-lg">
+            <h3 className="text-lg font-bold mb-4">Change Notes Password</h3>
+            <input
+              type="password"
+              placeholder="Current Password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="w-full mb-2 p-2 border rounded"
+            />
+            <input
+              type="password"
+              placeholder="New Password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full mb-2 p-2 border rounded"
+            />
+            <input
+              type="password"
+              placeholder="Confirm New Password"
+              value={confirmNewPassword}
+              onChange={(e) => setConfirmNewPassword(e.target.value)}
+              className="w-full mb-2 p-2 border rounded"
+            />
+            {passwordChangeError && (
+              <p className="text-red-500 text-sm">{passwordChangeError}</p>
+            )}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={handleToggleChangePasswordModal}
+                className="px-4 py-2 text-black bg-gray-300 rounded hover:bg-gray-400 transition duration-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleChangePassword}
+                className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 transition duration-300"
+              >
+                Change Password
               </button>
             </div>
           </div>

@@ -25,6 +25,7 @@ function App() {
       element: <ProfileLayout />,
       children: [
         { path: "", element: <Home /> },
+        { path: "home", element: <Home /> },
         { path: "searchbar", element: <SearchBar /> },
         { path: "favourites", element: <FavouritesList />,
           children: [

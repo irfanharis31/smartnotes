@@ -9,6 +9,7 @@ import trashicon from "../assets/trashicon.svg";
 import SearchBar from "./SearchBar";
 import { FaEllipsisV } from "react-icons/fa"; // Three dots icon
 import { MdKeyboardArrowDown } from "react-icons/md"; // Down arrow icon
+import Home from './Home'
 
 function Sidebar() {
   const [showNotesDropdown, setShowNotesDropdown] = useState(false);
@@ -384,35 +385,36 @@ function Sidebar() {
           className="rounded-full bg-[#41b3a2] py-2 px-2.5"
         />
       </div>
-      <div className="flex items-center">
-        <span className="username text-3xl mb-5">{username}</span>
-        <MdKeyboardArrowDown
-          className="dropdown-icon text-2xl ml-20 border rounded-full bg-gray-200 mb-4 cursor-pointer"
-          onClick={toggleLogoutMenu}
-        />
-         {showLogoutMenu && (
-            <ul className="absolute bg-white shadow-lg rounded mt-2 w-40 right-0">
-              <li
-                onClick={handleToggleChangePassModal}
-                className="py-2 px-4 cursor-pointer hover:bg-gray-100"
-              >
-                Change Password
-              </li>
-              <li
-                onClick={handleToggleChangePasswordModal}
-                className="py-2 px-4 cursor-pointer hover:bg-gray-100"
-              >
-                Change NotesPassword
-              </li>
-              <li
-                onClick={handleConfirmLogout}
-                className="py-2 px-4 cursor-pointer hover:bg-gray-100"
-              >
-                Log out
-              </li>
-            </ul>
-          )}
-      </div>
+      <div className="relative flex items-center">
+  <span className="username text-3xl mb-5 me-2 ">{username}</span>
+  <MdKeyboardArrowDown
+    className="dropdown-icon text-2xl border rounded-full bg-gray-200 mb-4 cursor-pointer"
+    onClick={toggleLogoutMenu}
+  />
+  {showLogoutMenu && (
+    <ul className="absolute bg-white shadow-lg rounded mt-2 w-40 right-0 top-full">
+      <li
+        onClick={handleToggleChangePassModal}
+        className="py-2 px-4 cursor-pointer hover:bg-gray-100"
+      >
+        Change Password
+      </li>
+      <li
+        onClick={handleToggleChangePasswordModal}
+        className="py-2 px-4 cursor-pointer hover:bg-gray-100"
+      >
+        Change NotesPassword
+      </li>
+      <li
+        onClick={handleConfirmLogout}
+        className="py-2 px-4 cursor-pointer hover:bg-gray-100"
+      >
+        Log out
+      </li>
+    </ul>
+  )}
+</div>
+
 
       {/* Centralized Logout Confirmation Modal */}
        {confirmLogout && (
@@ -437,96 +439,98 @@ function Sidebar() {
         </div>
       )}
 
-      {showChangePassModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-4 rounded shadow-lg">
-            <h3 className="mb-4 text-lg font-bold">Change Password</h3>
-            <input
-              type="password"
-              placeholder="Current Password"
-              value={currentPass}
-              onChange={(e) => setCurrentPass(e.target.value)}
-              className="w-full mb-2 p-2 border rounded"
-            />
-            <input
-              type="password"
-              placeholder="New Password"
-              value={newPass}
-              onChange={(e) => setNewPass(e.target.value)}
-              className="w-full mb-2 p-2 border rounded"
-            />
-            <input
-              type="password"
-              placeholder="Confirm New Password"
-              value={confirmNewPass}
-              onChange={(e) => setConfirmNewPass(e.target.value)}
-              className="w-full mb-2 p-2 border rounded"
-            />
-            {passChangeError && (
-              <p className="text-red-500 text-sm">{passChangeError}</p>
-            )}
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={handleToggleChangePassModal}
-                className="px-4 py-2 mr-2 text-white bg-gray-600 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleChangePass}
-                className="px-4 py-2 text-white bg-blue-600 rounded"
-              >
-                Change Password
-              </button>
-            </div>
-          </div>
-        </div>
+{showChangePassModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-white p-6 rounded shadow-lg w-full max-w-md relative z-60">
+      <h3 className="mb-4 text-lg font-bold">Change Password</h3>
+      <input
+        type="password"
+        placeholder="Current Password"
+        value={currentPass}
+        onChange={(e) => setCurrentPass(e.target.value)}
+        className="w-full mb-2 p-2 border border-gray-300 rounded"
+      />
+      <input
+        type="password"
+        placeholder="New Password"
+        value={newPass}
+        onChange={(e) => setNewPass(e.target.value)}
+        className="w-full mb-2 p-2 border border-gray-300 rounded"
+      />
+      <input
+        type="password"
+        placeholder="Confirm New Password"
+        value={confirmNewPass}
+        onChange={(e) => setConfirmNewPass(e.target.value)}
+        className="w-full mb-2 p-2 border border-gray-300 rounded"
+      />
+      {passChangeError && (
+        <p className="text-red-500 text-sm">{passChangeError}</p>
       )}
-      {showChangePasswordModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-4 rounded shadow-lg">
-            <h3 className="mb-4 text-lg font-bold">Change Notes Password</h3>
-            <input
-              type="password"
-              placeholder="Current Password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full mb-2 p-2 border rounded"
-            />
-            <input
-              type="password"
-              placeholder="New Password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full mb-2 p-2 border rounded"
-            />
-            <input
-              type="password"
-              placeholder="Confirm New Password"
-              value={confirmNewPassword}
-              onChange={(e) => setConfirmNewPassword(e.target.value)}
-              className="w-full mb-2 p-2 border rounded"
-            />
-            {passwordChangeError && (
-              <p className="text-red-500 text-sm">{passwordChangeError}</p>
-            )}
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={handleToggleChangePasswordModal}
-                className="px-4 py-2 mr-2 text-white bg-gray-600 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleChangePassword}
-                className="px-4 py-2 text-white bg-blue-600 rounded"
-              >
-                Change NotesPassword
-              </button>
-            </div>
-          </div>
-        </div>
+      <div className="mt-4 flex justify-end">
+        <button
+          onClick={handleToggleChangePassModal}
+          className="px-4 py-2 mr-2 text-white bg-gray-600 hover:bg-gray-700 rounded transition"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleChangePass}
+          className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded transition"
+        >
+          Change Password
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{showChangePasswordModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-white p-6 rounded shadow-lg w-full max-w-md relative z-60">
+      <h3 className="mb-4 text-lg font-bold">Change Notes Password</h3>
+      <input
+        type="password"
+        placeholder="Current Password"
+        value={currentPassword}
+        onChange={(e) => setCurrentPassword(e.target.value)}
+        className="w-full mb-2 p-2 border border-gray-300 rounded"
+      />
+      <input
+        type="password"
+        placeholder="New Password"
+        value={newPassword}
+        onChange={(e) => setNewPassword(e.target.value)}
+        className="w-full mb-2 p-2 border border-gray-300 rounded"
+      />
+      <input
+        type="password"
+        placeholder="Confirm New Password"
+        value={confirmNewPassword}
+        onChange={(e) => setConfirmNewPassword(e.target.value)}
+        className="w-full mb-2 p-2 border border-gray-300 rounded"
+      />
+      {passwordChangeError && (
+        <p className="text-red-500 text-sm">{passwordChangeError}</p>
       )}
+      <div className="mt-4 flex justify-end">
+        <button
+          onClick={handleToggleChangePasswordModal}
+          className="px-4 py-2 mr-2 text-white bg-gray-600 hover:bg-gray-700 rounded transition"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleChangePassword}
+          className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded transition"
+        >
+          Change Notes Password
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
 
   

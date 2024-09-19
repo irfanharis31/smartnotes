@@ -1,6 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import ReactQuill, { Quill } from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import ImageResize from 'quill-image-resize-module-react';
 
+Quill.register('modules/imageResize', ImageResize);
+
+const modules = {
+  toolbar: {
+    container: [
+      [{ 'header': '1'}, { 'header': '2'}, { 'font': [] }],
+      [{ size: [] }],
+      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'indent': '-1'}, { 'indent': '+1' }],
+      ['link', 'image'], // Includes image button
+      [{ 'color': [] }, { 'background': [] }], // Includes background color options
+      ['clean']
+    ]
+  },
+  imageResize: { // Enable the ImageResize module
+    modules: ['Resize', 'DisplaySize', 'Toolbar'] // Specify which features to enable
+  }
+};
+const formats = [
+  'header', 'font', 'size',
+  'bold', 'italic', 'underline', 'strike', 'blockquote',
+  'list', 'bullet', 'indent',
+  'link', 'image', 'color', 'background'
+];
 // Debounce utility function
 const debounce = (func, delay) => {
   let timeoutId;
@@ -19,6 +46,11 @@ function FavNoteDetail() {
   const [tags, setTags] = useState([]);
   const [isFavourite, setIsFavourite] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
+  const [showTagOptions, setShowTagOptions] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [enteredPassword, setEnteredPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const predefinedTags = ['Personal', 'Work'];
 
   useEffect(() => {
     if (noteId) {
@@ -30,7 +62,6 @@ function FavNoteDetail() {
             },
           });
           const data = await response.json();
-
           if (data.noteId === noteId) {
             setNote(data);
             setNoteTitle(data.title || '');
@@ -80,16 +111,23 @@ function FavNoteDetail() {
     setNoteTitle(e.target.value);
   };
 
-  const handleTextChange = (e) => {
-    setNoteText(e.target.value);
+  const handleTextChange = (content) => {
+    setNoteText(content);
   };
 
   const handleAddTag = () => {
-    const newTag = prompt('Enter a new tag:');
-    if (newTag) {
-      setTags([...tags, newTag]);
-    }
+    setShowTagOptions(!showTagOptions);
   };
+
+  const handleSelectTag = (tag) => {
+    setTags([tag]); // Ensure only one tag is assigned
+    setShowTagOptions(false);
+  };
+
+  const handleRemoveTag = () => {
+    setTags([]); // Remove current tag
+  };
+
 
   const handleToggleFavourite = async () => {
     try {
@@ -109,7 +147,7 @@ function FavNoteDetail() {
     if (window.confirm('Are you sure you want to remove this note from favourites?')) {
       try {
         await fetch(`http://localhost:3000/user-api/users/notes/unfavorite/${noteId}`, {
-          method: 'PUT', 
+          method: 'PUT',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },
@@ -122,17 +160,63 @@ function FavNoteDetail() {
     }
   };
 
-  const handleToggleLock = async () => {
+  const handleToggleLock = () => {
+    if (isLocked) {
+      setShowPasswordModal(true);
+    } else {
+      setIsLocked(true);
+    }
+  };
+
+
+
+  const handlePasswordSubmit = async () => {
     try {
-      await fetch(`http://localhost:3000/user-api/users/notes/lock/${noteId}`, {
-        method: 'PUT',
+      const response = await fetch('http://localhost:3000/user-api/users/profile', {
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
       });
-      setIsLocked(!isLocked);
+      const userData = await response.json();
+      const isPasswordMatch = await fetch('http://localhost:3000/user-api/users/notes/verify-password', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password: enteredPassword, notesPassword: userData.notesPassword }),
+      });
+      const result = await isPasswordMatch.json();
+      if (result.success) {
+        setIsLocked(false);
+        setShowPasswordModal(false);
+        setEnteredPassword('');
+        setPasswordError('');
+      } else {
+        setPasswordError('Incorrect password. Please try again.');
+      }
     } catch (error) {
-      console.error('Error updating lock status:', error);
+      console.error('Error verifying password:', error);
+      setPasswordError('An error occurred while verifying the password.');
+    }
+  };
+  
+  const handleDeleteNote = async () => {
+    const confirmDelete = window.confirm('Are you sure you want to move this note to trash?');
+    if (confirmDelete) {
+      try {
+        await fetch(`http://localhost:3000/user-api/users/notes/delete/${noteId}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+        alert('Note moved to trash.');
+        navigate('/notes');
+      } catch (error) {
+        console.error('Error moving note to trash:', error);
+      }
     }
   };
 
@@ -152,21 +236,27 @@ function FavNoteDetail() {
         >
           Add Tag
         </button>
-        {isFavourite ? (
+        {showTagOptions && (
+          <div className="absolute bg-white border border-gray-300 rounded-md shadow-lg mt-2">
+            {predefinedTags.map(tag => (
+              <div
+                key={tag}
+                onClick={() => handleSelectTag(tag)}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              >
+                {tag}
+              </div>
+            ))}
+          </div>
+        )}
+       
           <button
             onClick={handleRemoveFromFavourites}
             className="px-3 py-1 bg-red-600 text-white font-semibold rounded hover:bg-red-500 transition duration-300"
           >
             Remove from Favourites
           </button>
-        ) : (
-          <button
-            onClick={handleToggleFavourite}
-            className="px-3 py-1 bg-[#41b3a2] text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300"
-          >
-            Add to Favourites
-          </button>
-        )}
+       
         <button
           onClick={handleToggleLock}
           className={`px-3 py-1 ${isLocked ? 'bg-red-500' : 'bg-[#41b3a2]'} text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300`}
@@ -174,20 +264,58 @@ function FavNoteDetail() {
           {isLocked ? 'Unlock Note' : 'Lock Note'}
         </button>
       </div>
-      <textarea
-        value={noteText}
-        onChange={handleTextChange}
-        className="w-full h-96 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#41b3a2] focus:border-transparent"
-        placeholder="Enter your note content here..."
-        disabled={isLocked}
-      />
-      <div>
+      <div className="mt-2">
         {tags.map((tag, index) => (
-          <span key={index} className="px-2 py-1 text-sm bg-gray-200 rounded-full mr-2">
+          <span key={index} className="inline-flex items-center px-2 py-1 text-md bg-gray-200 rounded-full mr-2">
             {tag}
+            <button
+              onClick={() => handleRemoveTag(tag)}
+              className="ml-2 text-red-700 text-2xl"
+            >
+              ×
+            </button>
           </span>
         ))}
       </div>
+      {isLocked ? (
+        <p className="text-gray-500 italic">This note is locked. Enter the password to unlock and view the content.</p>
+      ) : (
+        <ReactQuill
+        value={noteText}
+        onChange={handleTextChange}
+        modules={modules}
+        formats={formats}
+        placeholder="Write your note here..."
+        className='mt-3'
+      /> 
+      )}
+      {showPasswordModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+          <div className="bg-white p-4 rounded shadow-lg">
+            <h2 className="text-xl mb-4">Enter Note Password</h2>
+            <input
+              type="password"
+              value={enteredPassword}
+              onChange={(e) => setEnteredPassword(e.target.value)}
+              className="w-full px-4 py-2 mb-2 border rounded-md"
+              placeholder="Password"
+            />
+            {passwordError && <p className="text-red-600 mb-2">{passwordError}</p>}
+            <button
+              onClick={handlePasswordSubmit}
+              className="px-4 py-2 bg-[#41b3a2] text-white font-semibold rounded hover:bg-[#33a89f]"
+            >
+              Submit
+            </button>
+            <button
+              onClick={() => setShowPasswordModal(false)}
+              className="px-4 py-2 bg-gray-300 text-black font-semibold rounded ml-2 hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

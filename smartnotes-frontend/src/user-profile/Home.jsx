@@ -1,49 +1,117 @@
-import React from 'react'
-function Home() {
-  return (
-    <div className='upContests ms-10 scroll-section pt-12 mb-8'>
-        <h1 className='text-5xl font-afacad font-medium mb-12'>Recently Visited</h1>
-        <div className="flex gap-4 overflow-x-auto py-4 rounded-xl scrollbar-hide">
-            <div className='flex gap-4 me-2'>
-                
-                            
-                                <div className="flex flex-col w-80 p-6 pb-4 sm:pe-4 bg-[#f5f5f5] rounded-28px hover:scale-[1.01] transition-all">
-                                    <img src="" alt="icon" className="w-8 mb-2" />
-                                    <h2 className='text-2xl font-semibold mb-2'></h2>
-                                    <p className="text-md">
-                                        {/* <span className='font-semibold'>Contest Name: </span> */}
-                                        </p>
-                                    <p className="text-md"><span className='font-semibold'>Date:</span> </p>
-                                    <p className="text-md"><span className='font-semibold'>Time:</span> </p>
-                                    <div className='flex justify-end mt-4'>
-                                        <a href="" target="_blank" rel="noreferrer">
-                                            <div className='bg-[#37373a] p-3 sm:p-2 rounded-full'>
-                                                <img src="" alt="open in new tab" className="w-5 sm:w-4 rotate-[-45deg]" />
-                                            </div>
-                                        </a>
-                                    </div>
-                                </div>
-                            
-                        
-                
-            </div>
-        </div>
-        <div className='flex justify-end me-10 mt-12 gap-6 sm:gap-4'>
-            {
-                <img className='w-12 sm:w-10 bg-[#e0e0e3] p-1 rounded-full' src="" alt="" />
-            }
-            {
-                <img className='w-12 sm:w-10 bg-[#e0e0e3] p-1 rounded-full hover:cursor-pointer' src=" " alt="" onClick="" />
-            }
-            {
-                <img className='w-12 sm:w-10 bg-[#e0e0e3] p-1 rounded-full hover:cursor-pointer' src="" alt="" onClick="" />
-            }
-            {
-                <img className='w-12 sm:w-10 bg-[#e0e0e3] p-1 rounded-full' src="" alt="" />
-            }
-        </div>
-    </div>
-)
-}
+import React, { useState, useEffect, useRef } from 'react';
+import { formatDistanceToNow, parseISO } from 'date-fns';
+import { useNavigate } from 'react-router-dom';  // Import useNavigate
+import rightArrow from '../assets/disabled-right.svg';
+import leftArrow from '../assets/disabled-left.svg';
 
-export default Home
+const RecentNotes = () => {
+  const [recentNotes, setRecentNotes] = useState([]);
+  const [error, setError] = useState(null);
+  const scrollRef = useRef(null);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
+  const navigate = useNavigate();  // Initialize useNavigate
+
+  useEffect(() => {
+    const fetchRecentNotes = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/user-api/users/recent-notes', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const data = await response.json();
+        setRecentNotes(data);
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+
+    fetchRecentNotes();
+  }, []);
+
+  useEffect(() => {
+    const scrollElement = scrollRef.current;
+
+    const handleScroll = () => {
+      if (scrollElement) {
+        const scrollLeftValue = scrollElement.scrollLeft;
+        const scrollWidthValue = scrollElement.scrollWidth - scrollElement.clientWidth;
+
+        setAtStart(scrollLeftValue === 0); // Reached start
+        setAtEnd(scrollLeftValue >= scrollWidthValue); // Reached end
+      }
+    };
+
+    if (scrollElement) {
+      scrollElement.addEventListener('scroll', handleScroll);
+      handleScroll(); // Initial check
+    }
+
+    return () => {
+      if (scrollElement) {
+        scrollElement.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, []);
+
+  const scrollLeft = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: -336, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: 336, behavior: 'smooth' });
+    }
+  };
+
+  // Function to handle note click
+  const handleNoteClick = (noteId) => {
+    navigate(`/profile/notes/${noteId}`);  // Navigate to the note detail page
+  };
+
+  return (
+    <div className='recent-notes ms-10 scroll-section pt-12 mb-8'>
+      <h1 className='text-5xl font-afacad font-medium mb-12'>Recent Notes</h1>
+      <div ref={scrollRef} className="flex gap-4 overflow-x-auto py-4 rounded-xl scrollbar-hide">
+        <div className='flex gap-4 me-2'>
+          {error && <p className="text-red-500">{error}</p>}
+          {recentNotes.length > 0 ? (
+            recentNotes.map(note => (
+              <div 
+                key={note.noteId} 
+                className="flex flex-col w-80 p-6 rounded-sm pb-4 sm:pe-4 bg-[#dde1dd] rounded-28px hover:scale-[1.07] transition-all cursor-pointer  hover:bg-[#cfd1cf]"
+                onClick={() => handleNoteClick(note.noteId)}  // Attach click handler
+              >
+                <h2 className='text-2xl font-semibold mb-2'>{note.title}</h2>
+                <p className="text-md"><strong>Tags:</strong> {note.tags.join(', ')}</p>
+                <p className="text-md"><strong>Last Accessed:</strong> {formatDistanceToNow(parseISO(note.lastAccessed), { addSuffix: true })}</p>
+              </div>
+            ))
+          ) : (
+            <p className="text-md text-gray-500">No recent notes available</p>
+          )}
+        </div>
+      </div>
+      <div className='flex justify-end me-10 mt-12 gap-6 sm:gap-4'>
+        {!atStart && (
+          <img className='w-12 sm:w-10 bg-[#e0e0e3] p-1 rounded-full hover:cursor-pointer' src={leftArrow} alt="" onClick={scrollLeft} />
+        )}
+        {!atEnd && (
+          <img className='w-12 sm:w-10 bg-[#e0e0e3] p-1 rounded-full hover:cursor-pointer' src={rightArrow} alt="" onClick={scrollRight} />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default RecentNotes;

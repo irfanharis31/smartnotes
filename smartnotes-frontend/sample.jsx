@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import ReactQuill, { Quill } from 'react-quill';
+import ReactQuill, { Quill } from "react-quill";
 import 'react-quill/dist/quill.snow.css';
+import ImageResize from 'quill-image-resize-module-react'; // Import the ImageResize module
+Quill.register("modules/imageResize", ImageResize);
 
 // Quill modules and formats
 const modules = {
@@ -16,9 +18,10 @@ const modules = {
       [{ 'color': [] }, { 'background': [] }], // Added background color
       ['clean']                                         
     ],
-    // handlers: {
-    //   image: handleImageUpload // Custom handler for image upload
-    // }
+
+  },
+  ImageResize: {
+    modules: ['Resize', 'DisplaySize', 'Toolbar'], // Allows resizing and other image controls
   },
 };
 
@@ -28,7 +31,6 @@ const formats = [
   'list', 'bullet', 'indent',
   'link', 'image', 'color', 'background'
 ];
-
 // Debounce utility function
 const debounce = (func, delay) => {
   let timeoutId;
@@ -86,10 +88,10 @@ function NoteDetail() {
   }, [noteId]);
 
   useEffect(() => {
-    if (!isLocked && noteId) {
+    if (!isLocked) {
       const autoSaveNote = debounce(async () => {
         try {
-          const response = await fetch(`http://localhost:3000/user-api/users/notes/${noteId}`, {
+          await fetch(`http://localhost:3000/user-api/users/notes/${noteId}`, {
             method: 'PUT',
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -103,21 +105,16 @@ function NoteDetail() {
               isLocked,
             }),
           });
-  
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-  
           console.log('Note auto-saved successfully!');
         } catch (error) {
           console.error('Error auto-saving note:', error);
         }
       }, 1000); // Delay of 1 second
-  
+
       autoSaveNote();
     }
   }, [noteText, noteTitle, tags, isFavourite, isLocked, noteId]);
-  
+
   const handleTitleChange = (e) => {
     setNoteTitle(e.target.value);
   };
@@ -180,42 +177,50 @@ function NoteDetail() {
 
   const handlePasswordSubmit = async () => {
     try {
-      const userResponse = await fetch('http://localhost:3000/user-api/users/profile', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      const userData = await userResponse.json();
+        // Fetch the stored notes password from the backend
+        const userResponse = await fetch('http://localhost:3000/user-api/users/profile', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        const userData = await userResponse.json();
 
-      if (!userData.success) {
-        setPasswordError('Failed to fetch user data.');
-        return;
-      }
+        if (!userData.success) {
+            setPasswordError('Failed to fetch user data.');
+            return;
+        }
 
-      const isPasswordMatch = await fetch('http://localhost:3000/user-api/users/notes/verify-password', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ password: enteredPassword, notesPassword: userData.notesPassword }),
-      });
-      const result = await isPasswordMatch.json();
+        console.log('Fetched notesPassword:', userData.notesPassword); // Debug log
 
-      if (result.success) {
-        setIsLocked(false);
-        setShowPasswordModal(false);
-        setPasswordError('');
-      } else {
-        setPasswordError('Incorrect password. Please try again.');
-      }
+        // Compare the entered password with the stored notes password
+        const isPasswordMatch = await fetch('http://localhost:3000/user-api/users/notes/verify-password', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ password: enteredPassword, notesPassword: userData.notesPassword }),
+        });
+        const result = await isPasswordMatch.json();
+
+        console.log('Password verification result:', result); // Debug log
+
+        if (result.success) {
+            setIsLocked(false);
+            setShowPasswordModal(false);
+            setPasswordError('');
+        } else {
+            setPasswordError('Incorrect password. Please try again.');
+        }
     } catch (error) {
-      console.error('Error verifying password:', error);
-      setPasswordError('An error occurred while verifying the password.');
+        console.error('Error verifying password:', error);
+        setPasswordError('An error occurred while verifying the password.');
     }
-  };
+};
+
+
 
   const handleDeleteNote = async () => {
     const confirmDelete = window.confirm('Are you sure you want to move this note to trash?');
@@ -235,40 +240,6 @@ function NoteDetail() {
     }
   };
 
-  // Custom image handler
-  // const handleImageUpload = () => {
-  //   const input = document.createElement('input');
-  //   input.setAttribute('type', 'file');
-  //   input.setAttribute('accept', 'image/*');
-  //   input.click();
-
-  //   input.onchange = async () => {
-  //     const file = input.files[0];
-  //     if (file) {
-  //       const formData = new FormData();
-  //       formData.append('image', file);
-
-  //       try {
-  //         const response = await fetch('http://localhost:3000/user-api/users/notes/upload-image', {
-  //           method: 'POST',
-  //           headers: {
-  //             'Authorization': `Bearer ${localStorage.getItem('token')}`,
-  //           },
-  //           body: formData,
-  //         });
-  //         const data = await response.json();
-  //         if (data.success && data.imageUrl) {
-  //           const range = this.quill.getSelection();
-  //           this.quill.insertEmbed(range.index, 'image', data.imageUrl);
-  //         } else {
-  //           alert('Image upload failed');
-  //         }
-  //       } catch (error) {
-  //         console.error('Error uploading image:', error);
-  //       }
-  //     }
-  //   };
-  // };
 
   return (
     <div className="p-4">
@@ -277,62 +248,118 @@ function NoteDetail() {
         value={noteTitle}
         onChange={handleTitleChange}
         placeholder="Enter note title"
-        className="w-full mb-4 p-2 border rounded"
+        className="w-full px-4 py-2 mb-2 border rounded-md focus:outline-none focus:ring focus:border-[#41b3a2]"
       />
-      <ReactQuill
+      <div className="flex gap-2 mb-2">
+        <button
+          onClick={handleAddTag}
+          className="px-3 py-1 bg-[#41b3a2] text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300"
+        >
+          Add Tag
+        </button>
+        {showTagOptions && (
+          <div className="absolute bg-white border border-gray-300 rounded-md shadow-lg mt-2">
+            {predefinedTags.map((tag) => (
+              <div
+                key={tag}
+                onClick={() => handleSelectTag(tag)}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              >
+                {tag}
+              </div>
+            ))}
+          </div>
+        )}
+        {isFavourite ? (
+          <button
+            onClick={handleRemoveFromFavourites}
+            className="px-3 py-1 bg-red-600 text-white font-semibold rounded hover:bg-red-500 transition duration-300"
+          >
+            Remove from Favourites
+          </button>
+        ) : (
+          <button
+            onClick={handleToggleFavourite}
+            className="px-3 py-1 bg-[#41b3a2] text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300"
+          >
+            Add to Favourites
+          </button>
+        )}
+        <button
+          onClick={handleToggleLock}
+          className={`px-3 py-1 ${isLocked ? 'bg-red-500' : 'bg-[#41b3a2]'} text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300`}
+        >
+          {isLocked ? 'Unlock Note' : 'Lock Note'}
+        </button>
+        {!isNewNote && (
+          <button
+            onClick={handleDeleteNote}
+            className="px-3 py-1 bg-red-600 text-white font-semibold rounded hover:bg-red-500 transition duration-300"
+          >
+            Delete Note
+          </button>
+        )}
+      </div>
+     
+         <div className="mt-2">
+        {tags.map((tag, index) => (
+          <span
+            key={index}
+            className="inline-flex items-center px-2 py-1 text-md bg-gray-200 rounded-full mr-2"
+            >
+            {tag}
+            <button
+              onClick={() => handleRemoveTag(tag)}
+              className="ml-2 text-red-700 text-2xl pb-0.5"
+              aria-label={`Remove ${tag}`}
+            >
+              &times;
+            </button>
+          </span>
+        ))}
+      </div>
+
+
+   
+      {isLocked ? (
+        <p className="text-gray-500 italic">This note is locked. Enter the password to unlock and view the content.</p>
+      ) : (
+        <ReactQuill
         value={noteText}
         onChange={handleTextChange}
         modules={modules}
         formats={formats}
-      />
-      <div className="flex items-center space-x-2 mt-4">
-        <button onClick={handleToggleFavourite} className="btn-primary">
-          {isFavourite ? 'Unfavourite' : 'Add to Favourite'}
-        </button>
-        {isFavourite && (
-          <button onClick={handleRemoveFromFavourites} className="btn-secondary">
-            Remove from Favourite
-          </button>
-        )}
-        <button onClick={handleToggleLock} className="btn-secondary">
-          {isLocked ? 'Unlock' : 'Lock'}
-        </button>
-        <button onClick={handleAddTag} className="btn-secondary">Add Tag</button>
-        <button onClick={handleDeleteNote} className="btn-secondary">Delete Note</button>
-      </div>
-
-      {showTagOptions && (
-        <div className="tag-options mt-2">
-          {predefinedTags.map((tag) => (
-            <button
-              key={tag}
-              onClick={() => handleSelectTag(tag)}
-              className="tag-option btn-secondary"
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
+        placeholder="Write your note here..."
+className="w-full h-96 p-4 border border-gray-200 rounded-lg "
+      /> 
       )}
 
       {showPasswordModal && (
-        <div className="modal">
-          <div className="modal-content">
-            <h3>Enter Password</h3>
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-md shadow-lg">
+            <h2 className="text-lg font-bold mb-4">Enter Notes Password</h2>
             <input
               type="password"
               value={enteredPassword}
               onChange={(e) => setEnteredPassword(e.target.value)}
-              placeholder="Enter your notes password"
-              className="w-full mb-2 p-2 border rounded"
+              className="w-full px-4 py-2 mb-4 border rounded-md focus:outline-none focus:ring focus:border-[#41b3a2]"
+              placeholder="Enter password"
             />
             {passwordError && <p className="text-red-500">{passwordError}</p>}
-            <button onClick={handlePasswordSubmit} className="btn-primary">
-              Submit
-            </button>
-            <button onClick={() => setShowPasswordModal(false)} className="btn-secondary">
-              Cancel
-            </button>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                className="px-3 py-1 bg-gray-300 text-black font-semibold rounded hover:bg-gray-400 transition duration-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePasswordSubmit}
+                className="px-3 py-1 bg-[#41b3a2] text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300"
+              >
+                Submit
+              </button>
+            </div>
           </div>
         </div>
       )}
