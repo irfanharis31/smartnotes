@@ -4,7 +4,7 @@ import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import Main from './components/main/Main';
 import ProfileLayout from "./user-profile/ProfileLayout";
 import Home from "./user-profile/Home";
-import FavouritesList from "./user-profile/FavouritesList";  // Updated component name
+import FavouritesList from "./user-profile/FavouritesList";
 import NoteDetail from "./user-profile/NoteDetail"; 
 import FavNoteDetail from "./user-profile/FavNotesDetail"; 
 import Notes from "./user-profile/Notes";
@@ -12,7 +12,7 @@ import Login from './components/login/Login';
 import SignUp from './components/signup/SignUp';
 import Tags from "./user-profile/Tags";
 import Trash from "./user-profile/Trash";
-import SearchBar from "./user-profile/SearchBar";
+import SearchBar from "./user-profile/SearchBar";  // Assuming SearchBar needs to be integrated into the profile pages
 
 function App() {  
   const browserRouter = createBrowserRouter([
@@ -22,23 +22,27 @@ function App() {
     },
     {
       path: "/profile",
-      element: <ProfileLayout />,
+      element: <ProfileLayout />, // Wraps profile-related pages
       children: [
-        { path: "", element: <Home /> },
+        { path: "", element: <Home /> },  // Redirect to home
         { path: "home", element: <Home /> },
-        { path: "searchbar", element: <SearchBar /> },
-        { path: "favourites", element: <FavouritesList />,
+        { path: "search", element: <SearchBar /> },  // Search page
+        { 
+          path: "favourites", 
+          element: <FavouritesList />,
           children: [
-            { path: ":noteId", element: <FavNoteDetail /> },  // Add NoteDetail for favourites
+            { path: ":noteId", element: <FavNoteDetail /> },  // Show note details within favourites
           ],
         },
-        { path: "notes", element: <Notes />,
+        { 
+          path: "notes", 
+          element: <Notes />,
           children: [
-            { path: ":noteId", element: <NoteDetail /> },
+            { path: ":noteId", element: <NoteDetail /> },  // Dynamic note detail
           ],
         },
         { path: "tags", element: <Tags /> },
-        { path: "trash", element: <Trash /> },
+        { path: "trash", element: <Trash /> },  // Trash page
       ],
     },
     {
@@ -48,7 +52,7 @@ function App() {
     {
       path: "/signup",
       element: <SignUp />,
-    }
+    },
   ]);
 
   return (

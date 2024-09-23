@@ -534,7 +534,7 @@ function Sidebar() {
     </div>
 
   
-        <SearchBar onSearch={(searchTerm) => console.log("Searching for:", searchTerm)} />
+        <SearchBar  />
   
         <button
           onClick={handleNewNote}
