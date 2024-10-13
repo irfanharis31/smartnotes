@@ -11,7 +11,7 @@ const SearchModal = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("http://localhost:3000/user-api/users/notes", {
+    fetch("https://smartnotes-backend.vercel.app//user-api/users/notes", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -39,9 +39,13 @@ const SearchModal = () => {
 
   return (
     <>
-      <button onClick={() => setIsOpen(true)} style={buttonStyles} className="w-full text-black bg-green-400">
+      <button
+        onClick={() => setIsOpen(true)}
+        style={buttonStyles}
+        className="w-full text-black bg-green-400"
+      >
         <img src={SearchBar} className="text-black" alt="" />
-       Click to Search Notes here
+        Click to Search Notes here
       </button>
 
       {isOpen && (
@@ -68,7 +72,11 @@ const SearchModal = () => {
               <div style={resultItemStyles}>No results</div>
             )}
           </div>
-          <button onClick={() => setIsOpen(false)} style={buttonStyles} className="bg-blue-600 text-white">
+          <button
+            onClick={() => setIsOpen(false)}
+            style={buttonStyles}
+            className="bg-blue-600 text-white"
+          >
             Close
           </button>
         </div>
@@ -84,7 +92,6 @@ const buttonStyles = {
   border: "none",
   borderRadius: "5px",
   cursor: "pointer",
-  
 };
 
 const modalStyles = {

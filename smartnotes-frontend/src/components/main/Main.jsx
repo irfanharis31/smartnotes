@@ -63,7 +63,7 @@ function Main() {
           </div>
           <div className='mt-12'>
             {!showForm && <img src={Notes} alt="" className='w-11/12' />}
-            {showForm === 'signup' && <SignUp />}
+              {showForm === 'signup' && <SignUp setShowForm = {setShowForm} />}
             {showForm === 'login' && <Login />}
           
         </div>

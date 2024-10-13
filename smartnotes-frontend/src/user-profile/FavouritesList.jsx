@@ -1,6 +1,6 @@
 // FavouritesList.js
-import React, { useEffect, useState } from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { Link, Outlet } from "react-router-dom";
 
 function FavouritesList() {
   const [favourites, setFavourites] = useState([]);
@@ -8,17 +8,26 @@ function FavouritesList() {
   useEffect(() => {
     const fetchFavourites = async () => {
       try {
-        const response = await fetch('http://localhost:3000/user-api/users/notes/favorites', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
+        const response = await fetch(
+          "https://smartnotes-backend.vercel.app//user-api/users/notes/favorites",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
 
         // Check if the response is okay
         if (!response.ok) {
-          console.error('Failed to fetch favourites:', response.status, response.statusText);
+          console.error(
+            "Failed to fetch favourites:",
+            response.status,
+            response.statusText
+          );
           if (response.status === 401) {
-            console.error('Authorization failed: Token might be invalid or expired.');
+            console.error(
+              "Authorization failed: Token might be invalid or expired."
+            );
           }
           return;
         }
@@ -26,12 +35,12 @@ function FavouritesList() {
         const data = await response.json();
 
         // Debugging to see what data is returned
-        console.log('Fetched favourites:', data);
+        console.log("Fetched favourites:", data);
 
         // Set favourites if data.notes exists, else log a message
         setFavourites(data.notes || []);
       } catch (error) {
-        console.error('Error fetching favourites:', error);
+        console.error("Error fetching favourites:", error);
       }
     };
 
@@ -41,20 +50,25 @@ function FavouritesList() {
   return (
     <div className="p-4">
       <h2 className="text-2xl font-semibold mb-4">Favourites</h2>
-      <ul>
-        {favourites.length === 0 ? (
-          <p></p>
-        ) : (
-          favourites.map(note => (
-            <li key={note.id} className="flex items-center mb-2">
-              <Link to={`/profile/favourites/${note.id}`} className="flex-grow text-[#41b3a2] font-semibold">
-                {note.name}
+
+      {favourites.length > 0 ? (
+        <ul className="list-disc pl-5">
+          {favourites.map((note, index) => (
+            <li key={index} className="mb-2">
+              <Link
+                to={`/note/${note.id}`}
+                className="text-blue-500 hover:underline"
+              >
+                {note.title}
               </Link>
             </li>
-          ))
-        )}
-      </ul>
-      <Outlet /> {/* Render NoteDetail as a child */}
+          ))}
+        </ul>
+      ) : (
+        <p>No favourite notes available.</p>
+      )}
+
+      <Outlet />
     </div>
   );
 }

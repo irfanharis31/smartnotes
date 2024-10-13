@@ -22,7 +22,7 @@ function App() {
     },
     {
       path: "/profile",
-      element: <ProfileLayout />, // Wraps profile-related pages
+      element: <ProfileLayout />,
       children: [
         { path: "", element: <Home /> },  // Redirect to home
         { path: "home", element: <Home /> },

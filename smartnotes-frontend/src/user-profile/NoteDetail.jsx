@@ -1,34 +1,50 @@
-import React, { useState, useEffect } from 'react';
-import ReactQuill, { Quill } from 'react-quill';
-import { useParams, useNavigate } from 'react-router-dom';
-import 'react-quill/dist/quill.snow.css';
-import ImageResize from 'quill-image-resize-module-react';
+import React, { useState, useEffect } from "react";
+import ReactQuill, { Quill } from "react-quill";
+import { useParams, useNavigate } from "react-router-dom";
+import "react-quill/dist/quill.snow.css";
+import ImageResize from "quill-image-resize-module-react";
 
 // Register the ImageResize module with Quill
-Quill.register('modules/imageResize', ImageResize);
+Quill.register("modules/imageResize", ImageResize);
 
 // Define Quill modules and formats
 const modules = {
   toolbar: {
     container: [
-      [{ 'header': '1'}, { 'header': '2'}, { 'font': [] }],
+      [{ header: "1" }, { header: "2" }, { font: [] }],
       [{ size: [] }],
-      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'indent': '-1'}, { 'indent': '+1' }],
-      ['link', 'image'], // Includes image button
-      [{ 'color': [] }, { 'background': [] }], // Includes background color options
-      ['clean']
-    ]
+      ["bold", "italic", "underline", "strike", "blockquote"],
+      [
+        { list: "ordered" },
+        { list: "bullet" },
+        { indent: "-1" },
+        { indent: "+1" },
+      ],
+      ["link", "image"], // Includes image button
+      [{ color: [] }, { background: [] }], // Includes background color options
+      ["clean"],
+    ],
   },
   imageResize: {
-    modules: ['Resize', 'DisplaySize', 'Toolbar']
-  }
+    modules: ["Resize", "DisplaySize", "Toolbar"],
+  },
 };
 const formats = [
-  'header', 'font', 'size',
-  'bold', 'italic', 'underline', 'strike', 'blockquote',
-  'list', 'bullet', 'indent',
-  'link', 'image', 'color', 'background'
+  "header",
+  "font",
+  "size",
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "blockquote",
+  "list",
+  "bullet",
+  "indent",
+  "link",
+  "image",
+  "color",
+  "background",
 ];
 
 const debounce = (func, delay) => {
@@ -43,8 +59,8 @@ function NoteDetail() {
   const { noteId } = useParams();
   const navigate = useNavigate();
   const [note, setNote] = useState({});
-  const [noteTitle, setNoteTitle] = useState('');
-  const [noteText, setNoteText] = useState('');
+  const [noteTitle, setNoteTitle] = useState("");
+  const [noteText, setNoteText] = useState("");
   const [tags, setTags] = useState([]);
   const [isFavourite, setIsFavourite] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
@@ -52,37 +68,40 @@ function NoteDetail() {
   const [showTagOptions, setShowTagOptions] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
-  const [enteredPassword, setEnteredPassword] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [passwordChangeError, setPasswordChangeError] = useState('');
+  const [enteredPassword, setEnteredPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [passwordChangeError, setPasswordChangeError] = useState("");
 
-  const predefinedTags = ['Personal', 'Work'];
+  const predefinedTags = ["Personal", "Work"];
 
   useEffect(() => {
     if (noteId) {
       const fetchNote = async () => {
         try {
-          const response = await fetch(`http://localhost:3000/user-api/users/notes/${noteId}`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
-          });
+          const response = await fetch(
+            `https://smartnotes-backend.vercel.app//user-api/users/notes/${noteId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
           const data = await response.json();
           if (data.noteId === noteId) {
             setNote(data);
-            setNoteTitle(data.title || '');
-            setNoteText(data.content || '');
+            setNoteTitle(data.title || "");
+            setNoteText(data.content || "");
             setTags(data.tags || []);
             setIsFavourite(data.isFavorite || false);
             setIsLocked(data.isLocked || false);
           } else {
-            console.error('Note ID mismatch');
+            console.error("Note ID mismatch");
           }
         } catch (error) {
-          console.error('Error fetching note:', error);
+          console.error("Error fetching note:", error);
         }
       };
 
@@ -94,23 +113,26 @@ function NoteDetail() {
     if (!isLocked) {
       const autoSaveNote = debounce(async () => {
         try {
-          await fetch(`http://localhost:3000/user-api/users/notes/${noteId}`, {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              title: noteTitle,
-              content: noteText,
-              tags,
-              isFavorite: isFavourite,
-              isLocked,
-            }),
-          });
-          console.log('Note auto-saved successfully!');
+          await fetch(
+            `https://smartnotes-backend.vercel.app//user-api/users/notes/${noteId}`,
+            {
+              method: "PUT",
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                title: noteTitle,
+                content: noteText,
+                tags,
+                isFavorite: isFavourite,
+                isLocked,
+              }),
+            }
+          );
+          console.log("Note auto-saved successfully!");
         } catch (error) {
-          console.error('Error auto-saving note:', error);
+          console.error("Error auto-saving note:", error);
         }
       }, 1000); // Delay of 1 second
 
@@ -142,34 +164,34 @@ function NoteDetail() {
   const handleToggleFavourite = async () => {
     try {
       const response = await fetch(
-        isFavourite 
-          ? `http://localhost:3000/user-api/users/notes/unfavorite/${noteId}` 
-          : `http://localhost:3000/user-api/users/notes/favorite/${noteId}`, 
+        isFavourite
+          ? `https://smartnotes-backend.vercel.app//user-api/users/notes/unfavorite/${noteId}`
+          : `https://smartnotes-backend.vercel.app//user-api/users/notes/favorite/${noteId}`,
         {
-          method: 'PUT',
+          method: "PUT",
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
-  
+
       if (response.ok) {
         // Toggle the favourite status in the local state
         setIsFavourite(!isFavourite);
-  
+
         // Re-fetch the list of favourite notes after updating the status
         fetchFavouriteNotes();
-  
-        const action = isFavourite ? 'removed from' : 'added to';
+
+        const action = isFavourite ? "removed from" : "added to";
         alert(`Note ${action} favourites successfully!`);
       } else {
-        console.error('Failed to update favourite status.');
+        console.error("Failed to update favourite status.");
       }
     } catch (error) {
-      console.error('Error updating favourite status:', error);
+      console.error("Error updating favourite status:", error);
     }
   };
-  
+
   const handleToggleLock = () => {
     if (isLocked) {
       setShowPasswordModal(true);
@@ -180,57 +202,71 @@ function NoteDetail() {
 
   const handlePasswordSubmit = async () => {
     try {
-        const userResponse = await fetch('http://localhost:3000/user-api/users/profile', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                'Content-Type': 'application/json',
-            },
-        });
-        const userData = await userResponse.json();
-
-        if (!userData.success) {
-            setPasswordError('Failed to fetch user data.');
-            return;
+      const userResponse = await fetch(
+        "https://smartnotes-backend.vercel.app//user-api/users/profile",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
         }
+      );
+      const userData = await userResponse.json();
 
-        const isPasswordMatch = await fetch('http://localhost:3000/user-api/users/notes/verify-password', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ password: enteredPassword, notesPassword: userData.notesPassword }),
-        });
-        const result = await isPasswordMatch.json();
+      if (!userData.success) {
+        setPasswordError("Failed to fetch user data.");
+        return;
+      }
 
-        if (result.success) {
-            setIsLocked(false);
-            setShowPasswordModal(false);
-            setPasswordError('');
-        } else {
-            setPasswordError('Incorrect password. Please try again.');
+      const isPasswordMatch = await fetch(
+        "https://smartnotes-backend.vercel.app//user-api/users/notes/verify-password",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            password: enteredPassword,
+            notesPassword: userData.notesPassword,
+          }),
         }
+      );
+      const result = await isPasswordMatch.json();
+
+      if (result.success) {
+        setIsLocked(false);
+        setShowPasswordModal(false);
+        setPasswordError("");
+      } else {
+        setPasswordError("Incorrect password. Please try again.");
+      }
     } catch (error) {
-        console.error('Error verifying password:', error);
-        setPasswordError('An error occurred while verifying the password.');
+      console.error("Error verifying password:", error);
+      setPasswordError("An error occurred while verifying the password.");
     }
-};
+  };
 
   const handleDeleteNote = async () => {
-    const confirmDelete = window.confirm('Are you sure you want to move this note to trash?');
+    const confirmDelete = window.confirm(
+      "Are you sure you want to move this note to trash?"
+    );
     if (confirmDelete) {
       try {
-        await fetch(`http://localhost:3000/user-api/users/notes/delete/${noteId}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        alert('Note moved to trash.');
-        navigate('/notes');
+        await fetch(
+          `https://smartnotes-backend.vercel.app//user-api/users/notes/delete/${noteId}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        alert("Note moved to trash.");
+        navigate("/profile/notes");
       } catch (error) {
-        console.error('Error moving note to trash:', error);
+        console.error("Error moving note to trash:", error);
       }
     }
   };
@@ -241,35 +277,38 @@ function NoteDetail() {
 
   const handleChangePassword = async () => {
     if (newPassword !== confirmNewPassword) {
-      setPasswordChangeError('New passwords do not match.');
+      setPasswordChangeError("New passwords do not match.");
       return;
     }
-    
+
     try {
-      const response = await fetch('http://localhost:3000/user-api/users/change-password', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          currentPassword,
-          newPassword,
-        }),
-      });
+      const response = await fetch(
+        "https://smartnotes-backend.vercel.app//user-api/users/change-password",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            currentPassword,
+            newPassword,
+          }),
+        }
+      );
       const result = await response.json();
       if (result.success) {
-        alert('Password changed successfully.');
+        alert("Password changed successfully.");
         setShowChangePasswordModal(false);
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmNewPassword('');
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmNewPassword("");
       } else {
-        setPasswordChangeError(result.message || 'Failed to change password.');
+        setPasswordChangeError(result.message || "Failed to change password.");
       }
     } catch (error) {
-      console.error('Error changing password:', error);
-      setPasswordChangeError('An error occurred while changing the password.');
+      console.error("Error changing password:", error);
+      setPasswordChangeError("An error occurred while changing the password.");
     }
   };
 
@@ -302,20 +341,22 @@ function NoteDetail() {
             ))}
           </div>
         )}
-   <button 
-  onClick={handleToggleFavourite} 
-  className={`px-4 py-2 font-semibold text-white rounded-md transition-colors duration-300 
-    ${isFavourite ? 'bg-red-500 hover:bg-red-600' : 'bg-[#41b3a2]'} 
+        <button
+          onClick={handleToggleFavourite}
+          className={`px-4 py-2 font-semibold text-white rounded-md transition-colors duration-300 
+    ${isFavourite ? "bg-red-500 hover:bg-red-600" : "bg-[#41b3a2]"} 
     `}
->
-  {isFavourite ? 'Remove from Favourites' : 'Add to Favourites'}
-</button>
+        >
+          {isFavourite ? "Remove from Favourites" : "Add to Favourites"}
+        </button>
 
         <button
           onClick={handleToggleLock}
-          className={`px-3 py-1 ${isLocked ? 'bg-red-500' : 'bg-[#41b3a2]'} text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300`}
+          className={`px-3 py-1 ${
+            isLocked ? "bg-red-500" : "bg-[#41b3a2]"
+          } text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300`}
         >
-          {isLocked ? 'Unlock Note' : 'Lock Note'}
+          {isLocked ? "Unlock Note" : "Lock Note"}
         </button>
         {!isNewNote && (
           <button
@@ -326,13 +367,13 @@ function NoteDetail() {
           </button>
         )}
       </div>
-     
+
       <div className="mt-2">
         {tags.map((tag, index) => (
           <span
             key={index}
             className="inline-flex items-center px-2 py-1 text-md bg-gray-200 rounded-full mr-2"
-            >
+          >
             {tag}
             <button
               onClick={() => handleRemoveTag(tag)}
@@ -346,7 +387,10 @@ function NoteDetail() {
       </div>
 
       {isLocked ? (
-        <p className="text-gray-500 italic">This note is locked. Enter the password to unlock and view the content.</p>
+        <p className="text-gray-500 italic">
+          This note is locked. Enter the password to unlock and view the
+          content.
+        </p>
       ) : (
         <ReactQuill
           value={noteText}
@@ -354,8 +398,8 @@ function NoteDetail() {
           modules={modules}
           formats={formats}
           placeholder="Write your note here..."
-          className='mt-3'
-        /> 
+          className="mt-3"
+        />
       )}
 
       {showPasswordModal && (

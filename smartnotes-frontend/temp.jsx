@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 
 // Debounce utility function
 const debounce = (func, delay) => {
@@ -14,39 +14,42 @@ function NoteDetail() {
   const { noteId } = useParams();
   const navigate = useNavigate();
   const [note, setNote] = useState({});
-  const [noteTitle, setNoteTitle] = useState('');
-  const [noteText, setNoteText] = useState('');
+  const [noteTitle, setNoteTitle] = useState("");
+  const [noteText, setNoteText] = useState("");
   const [tags, setTags] = useState([]);
   const [isFavourite, setIsFavourite] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [isNewNote, setIsNewNote] = useState(!noteId);
   const [showTagOptions, setShowTagOptions] = useState(false);
 
-  const predefinedTags = ['Personal', 'Work'];
+  const predefinedTags = ["Personal", "Work"];
 
   useEffect(() => {
     if (noteId) {
       const fetchNote = async () => {
         try {
-          const response = await fetch(`http://localhost:3000/user-api/users/notes/${noteId}`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
-          });
+          const response = await fetch(
+            `https://smartnotes-backend.vercel.app//user-api/users/notes/${noteId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
           const data = await response.json();
 
           if (data.noteId === noteId) {
             setNote(data);
-            setNoteTitle(data.title || '');
-            setNoteText(data.content || '');
+            setNoteTitle(data.title || "");
+            setNoteText(data.content || "");
             setTags(data.tags || []);
             setIsFavourite(data.isFavorite || false);
             setIsLocked(data.isLocked || false);
           } else {
-            console.error('Note ID mismatch');
+            console.error("Note ID mismatch");
           }
         } catch (error) {
-          console.error('Error fetching note:', error);
+          console.error("Error fetching note:", error);
         }
       };
 
@@ -57,23 +60,26 @@ function NoteDetail() {
   useEffect(() => {
     const autoSaveNote = debounce(async () => {
       try {
-        await fetch(`http://localhost:3000/user-api/users/notes/${noteId}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            title: noteTitle,
-            content: noteText,
-            tags,
-            isFavorite: isFavourite,
-            isLocked,
-          }),
-        });
-        console.log('Note auto-saved successfully!');
+        await fetch(
+          `https://smartnotes-backend.vercel.app//user-api/users/notes/${noteId}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              title: noteTitle,
+              content: noteText,
+              tags,
+              isFavorite: isFavourite,
+              isLocked,
+            }),
+          }
+        );
+        console.log("Note auto-saved successfully!");
       } catch (error) {
-        console.error('Error auto-saving note:', error);
+        console.error("Error auto-saving note:", error);
       }
     }, 1000); // Delay of 1 second
 
@@ -103,31 +109,41 @@ function NoteDetail() {
 
   const handleToggleFavourite = async () => {
     try {
-      await fetch(`http://localhost:3000/user-api/users/notes/favorite/${noteId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      await fetch(
+        `https://smartnotes-backend.vercel.app//user-api/users/notes/favorite/${noteId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
       setIsFavourite(!isFavourite);
     } catch (error) {
-      console.error('Error updating favorite status:', error);
+      console.error("Error updating favorite status:", error);
     }
   };
-   
+
   const handleRemoveFromFavourites = async () => {
-    if (window.confirm('Are you sure you want to remove this note from favourites?')) {
+    if (
+      window.confirm(
+        "Are you sure you want to remove this note from favourites?"
+      )
+    ) {
       try {
-        await fetch(`http://localhost:3000/user-api/users/notes/unfavorite/${noteId}`, {
-          method: 'PUT', 
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
+        await fetch(
+          `https://smartnotes-backend.vercel.app//user-api/users/notes/unfavorite/${noteId}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
         setIsFavourite(false);
-        alert('Note removed from favourites.');
+        alert("Note removed from favourites.");
       } catch (error) {
-        console.error('Error removing note from favourites:', error);
+        console.error("Error removing note from favourites:", error);
       }
     }
   };
@@ -137,19 +153,24 @@ function NoteDetail() {
   };
 
   const handleDeleteNote = async () => {
-    const confirmDelete = window.confirm('Are you sure you want to move this note to trash?');
+    const confirmDelete = window.confirm(
+      "Are you sure you want to move this note to trash?"
+    );
     if (confirmDelete) {
       try {
-        await fetch(`http://localhost:3000/user-api/users/notes/delete/${noteId}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        alert('Note moved to trash.');
-        navigate('/notes');
+        await fetch(
+          `https://smartnotes-backend.vercel.app//user-api/users/notes/delete/${noteId}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        alert("Note moved to trash.");
+        navigate("/notes");
       } catch (error) {
-        console.error('Error moving note to trash:', error);
+        console.error("Error moving note to trash:", error);
       }
     }
   };
@@ -183,7 +204,7 @@ function NoteDetail() {
             ))}
           </div>
         )}
-          {isFavourite ? (
+        {isFavourite ? (
           <button
             onClick={handleRemoveFromFavourites}
             className="px-3 py-1 bg-red-600 text-white font-semibold rounded hover:bg-red-500 transition duration-300"
@@ -200,9 +221,11 @@ function NoteDetail() {
         )}
         <button
           onClick={handleToggleLock}
-          className={`px-3 py-1 ${isLocked ? 'bg-red-500' : 'bg-[#41b3a2]'} text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300`}
+          className={`px-3 py-1 ${
+            isLocked ? "bg-red-500" : "bg-[#41b3a2]"
+          } text-white font-semibold rounded hover:bg-[#33a89f] transition duration-300`}
         >
-          {isLocked ? 'Unlock Note' : 'Lock Note'}
+          {isLocked ? "Unlock Note" : "Lock Note"}
         </button>
         {!isNewNote && (
           <button
@@ -225,7 +248,7 @@ function NoteDetail() {
           <span
             key={index}
             className="inline-flex items-center px-2 py-1 text-md bg-gray-200 rounded-full mr-2"
-            >
+          >
             {tag}
             <button
               onClick={() => handleRemoveTag(tag)}
