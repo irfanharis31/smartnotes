@@ -89,7 +89,7 @@ function Sidebar() {
       }
 
       const response = await fetch(
-        "https://smartnotes-backend.vercel.app//user-api/users/change-notes-password",
+        "https://smartnotes-backend.vercel.app/user-api/users/change-notes-password",
         {
           method: "PUT",
           headers: {
@@ -135,7 +135,7 @@ function Sidebar() {
       }
 
       const response = await fetch(
-        "https://smartnotes-backend.vercel.app//user-api/users/change-password",
+        "https://smartnotes-backend.vercel.app/user-api/users/change-password",
         {
           method: "PUT",
           headers: {
@@ -178,7 +178,7 @@ function Sidebar() {
         const headers = { Authorization: `Bearer ${token}` };
 
         const userResponse = await fetch(
-          "https://smartnotes-backend.vercel.app//user-api/users/me",
+          "https://smartnotes-backend.vercel.app/user-api/users/me",
           { headers }
         );
         if (userResponse.ok) {
@@ -189,7 +189,7 @@ function Sidebar() {
         }
 
         const notesResponse = await fetch(
-          "https://smartnotes-backend.vercel.app//user-api/users/notes",
+          "https://smartnotes-backend.vercel.app/user-api/users/notes",
           { headers }
         );
         if (notesResponse.ok) {
@@ -201,7 +201,7 @@ function Sidebar() {
         }
 
         const favoritesResponse = await fetch(
-          "https://smartnotes-backend.vercel.app//user-api/users/notes/favorites",
+          "https://smartnotes-backend.vercel.app/user-api/users/notes/favorites",
           { headers }
         );
         if (favoritesResponse.ok) {
@@ -212,7 +212,7 @@ function Sidebar() {
         }
 
         // const tagsResponse = await fetch(
-        //   "https://smartnotes-backend.vercel.app//user-api/users/tags",
+        //   "https://smartnotes-backend.vercel.app/user-api/users/tags",
         //   { headers }
         // );
         // if (tagsResponse.ok) {
@@ -223,7 +223,7 @@ function Sidebar() {
         // }
 
         const trashResponse = await fetch(
-          "https://smartnotes-backend.vercel.app//user-api/users/notes/recycle-bin",
+          "https://smartnotes-backend.vercel.app/user-api/users/notes/recycle-bin",
           { headers }
         );
         if (trashResponse.ok) {
@@ -273,7 +273,7 @@ function Sidebar() {
       }
 
       const response = await fetch(
-        "https://smartnotes-backend.vercel.app//user-api/users/notes",
+        "https://smartnotes-backend.vercel.app/user-api/users/notes",
         {
           method: "POST",
           headers: {
@@ -315,7 +315,7 @@ function Sidebar() {
       }
 
       const response = await fetch(
-        `https://smartnotes-backend.vercel.app//user-api/users/notes/${id}`,
+        `https://smartnotes-backend.vercel.app/user-api/users/notes/${id}`,
         {
           method: "PUT",
           headers: {
@@ -349,7 +349,7 @@ function Sidebar() {
       }
 
       const response = await fetch(
-        `https://smartnotes-backend.vercel.app//user-api/users/notes/undo-delete/${id}`,
+        `https://smartnotes-backend.vercel.app/user-api/users/notes/undo-delete/${id}`,
         {
           method: "PUT", // Use PUT to match the backend route
           headers: {
@@ -383,7 +383,7 @@ function Sidebar() {
       }
 
       const response = await fetch(
-        `https://smartnotes-backend.vercel.app//user-api/users/notes/permanent-delete/${id}`,
+        `https://smartnotes-backend.vercel.app/user-api/users/notes/permanent-delete/${id}`,
         {
           method: "DELETE",
           headers: {

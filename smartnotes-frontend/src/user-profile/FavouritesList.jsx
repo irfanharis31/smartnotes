@@ -9,7 +9,7 @@ function FavouritesList() {
     const fetchFavourites = async () => {
       try {
         const response = await fetch(
-          "https://smartnotes-backend.vercel.app//user-api/users/notes/favorites",
+          "https://smartnotes-backend.vercel.app/user-api/users/notes/favorites",
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,

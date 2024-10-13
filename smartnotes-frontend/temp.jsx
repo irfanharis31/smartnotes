@@ -29,7 +29,7 @@ function NoteDetail() {
       const fetchNote = async () => {
         try {
           const response = await fetch(
-            `https://smartnotes-backend.vercel.app//user-api/users/notes/${noteId}`,
+            `https://smartnotes-backend.vercel.app/user-api/users/notes/${noteId}`,
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -61,7 +61,7 @@ function NoteDetail() {
     const autoSaveNote = debounce(async () => {
       try {
         await fetch(
-          `https://smartnotes-backend.vercel.app//user-api/users/notes/${noteId}`,
+          `https://smartnotes-backend.vercel.app/user-api/users/notes/${noteId}`,
           {
             method: "PUT",
             headers: {
@@ -110,7 +110,7 @@ function NoteDetail() {
   const handleToggleFavourite = async () => {
     try {
       await fetch(
-        `https://smartnotes-backend.vercel.app//user-api/users/notes/favorite/${noteId}`,
+        `https://smartnotes-backend.vercel.app/user-api/users/notes/favorite/${noteId}`,
         {
           method: "PUT",
           headers: {
@@ -132,7 +132,7 @@ function NoteDetail() {
     ) {
       try {
         await fetch(
-          `https://smartnotes-backend.vercel.app//user-api/users/notes/unfavorite/${noteId}`,
+          `https://smartnotes-backend.vercel.app/user-api/users/notes/unfavorite/${noteId}`,
           {
             method: "PUT",
             headers: {
@@ -159,7 +159,7 @@ function NoteDetail() {
     if (confirmDelete) {
       try {
         await fetch(
-          `https://smartnotes-backend.vercel.app//user-api/users/notes/delete/${noteId}`,
+          `https://smartnotes-backend.vercel.app/user-api/users/notes/delete/${noteId}`,
           {
             method: "PUT",
             headers: {

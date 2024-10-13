@@ -73,7 +73,7 @@ function FavNoteDetail() {
       const fetchNote = async () => {
         try {
           const response = await fetch(
-            `https://smartnotes-backend.vercel.app//user-api/users/notes/${noteId}`,
+            `https://smartnotes-backend.vercel.app/user-api/users/notes/${noteId}`,
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -104,7 +104,7 @@ function FavNoteDetail() {
     const autoSaveNote = debounce(async () => {
       try {
         await fetch(
-          `https://smartnotes-backend.vercel.app//user-api/users/notes/${noteId}`,
+          `https://smartnotes-backend.vercel.app/user-api/users/notes/${noteId}`,
           {
             method: "PUT",
             headers: {
@@ -153,7 +153,7 @@ function FavNoteDetail() {
   const handleToggleFavourite = async () => {
     try {
       await fetch(
-        `https://smartnotes-backend.vercel.app//user-api/users/notes/favorite/${noteId}`,
+        `https://smartnotes-backend.vercel.app/user-api/users/notes/favorite/${noteId}`,
         {
           method: "PUT",
           headers: {
@@ -175,7 +175,7 @@ function FavNoteDetail() {
     ) {
       try {
         await fetch(
-          `https://smartnotes-backend.vercel.app//user-api/users/notes/unfavorite/${noteId}`,
+          `https://smartnotes-backend.vercel.app/user-api/users/notes/unfavorite/${noteId}`,
           {
             method: "PUT",
             headers: {
@@ -203,7 +203,7 @@ function FavNoteDetail() {
   const handlePasswordSubmit = async () => {
     try {
       const response = await fetch(
-        "https://smartnotes-backend.vercel.app//user-api/users/profile",
+        "https://smartnotes-backend.vercel.app/user-api/users/profile",
         {
           method: "GET",
           headers: {
@@ -213,7 +213,7 @@ function FavNoteDetail() {
       );
       const userData = await response.json();
       const isPasswordMatch = await fetch(
-        "https://smartnotes-backend.vercel.app//user-api/users/notes/verify-password",
+        "https://smartnotes-backend.vercel.app/user-api/users/notes/verify-password",
         {
           method: "POST",
           headers: {
@@ -248,7 +248,7 @@ function FavNoteDetail() {
     if (confirmDelete) {
       try {
         await fetch(
-          `https://smartnotes-backend.vercel.app//user-api/users/notes/delete/${noteId}`,
+          `https://smartnotes-backend.vercel.app/user-api/users/notes/delete/${noteId}`,
           {
             method: "PUT",
             headers: {

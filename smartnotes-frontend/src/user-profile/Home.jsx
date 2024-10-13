@@ -16,7 +16,7 @@ const RecentNotes = () => {
     const fetchRecentNotes = async () => {
       try {
         const response = await fetch(
-          "https://smartnotes-backend.vercel.app//user-api/users/recent-notes",
+          "https://smartnotes-backend.vercel.app/user-api/users/recent-notes",
           {
             method: "GET",
             headers: {

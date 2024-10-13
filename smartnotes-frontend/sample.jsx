@@ -76,7 +76,7 @@ function NoteDetail() {
       const fetchNote = async () => {
         try {
           const response = await fetch(
-            `https://smartnotes-backend.vercel.app//user-api/users/notes/${noteId}`,
+            `https://smartnotes-backend.vercel.app/user-api/users/notes/${noteId}`,
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -109,7 +109,7 @@ function NoteDetail() {
       const autoSaveNote = debounce(async () => {
         try {
           await fetch(
-            `https://smartnotes-backend.vercel.app//user-api/users/notes/${noteId}`,
+            `https://smartnotes-backend.vercel.app/user-api/users/notes/${noteId}`,
             {
               method: "PUT",
               headers: {
@@ -159,7 +159,7 @@ function NoteDetail() {
   const handleToggleFavourite = async () => {
     try {
       await fetch(
-        `https://smartnotes-backend.vercel.app//user-api/users/notes/favorite/${noteId}`,
+        `https://smartnotes-backend.vercel.app/user-api/users/notes/favorite/${noteId}`,
         {
           method: "PUT",
           headers: {
@@ -181,7 +181,7 @@ function NoteDetail() {
     ) {
       try {
         await fetch(
-          `https://smartnotes-backend.vercel.app//user-api/users/notes/unfavorite/${noteId}`,
+          `https://smartnotes-backend.vercel.app/user-api/users/notes/unfavorite/${noteId}`,
           {
             method: "PUT",
             headers: {
@@ -209,7 +209,7 @@ function NoteDetail() {
     try {
       // Fetch the stored notes password from the backend
       const userResponse = await fetch(
-        "https://smartnotes-backend.vercel.app//user-api/users/profile",
+        "https://smartnotes-backend.vercel.app/user-api/users/profile",
         {
           method: "GET",
           headers: {
@@ -229,7 +229,7 @@ function NoteDetail() {
 
       // Compare the entered password with the stored notes password
       const isPasswordMatch = await fetch(
-        "https://smartnotes-backend.vercel.app//user-api/users/notes/verify-password",
+        "https://smartnotes-backend.vercel.app/user-api/users/notes/verify-password",
         {
           method: "POST",
           headers: {
@@ -266,7 +266,7 @@ function NoteDetail() {
     if (confirmDelete) {
       try {
         await fetch(
-          `https://smartnotes-backend.vercel.app//user-api/users/notes/delete/${noteId}`,
+          `https://smartnotes-backend.vercel.app/user-api/users/notes/delete/${noteId}`,
           {
             method: "PUT",
             headers: {

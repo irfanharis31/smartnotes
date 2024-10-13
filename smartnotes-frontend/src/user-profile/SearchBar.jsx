@@ -11,7 +11,7 @@ const SearchModal = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("https://smartnotes-backend.vercel.app//user-api/users/notes", {
+    fetch("https://smartnotes-backend.vercel.app/user-api/users/notes", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

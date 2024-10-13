@@ -22,7 +22,7 @@ function Login() {
     try {
       // Sending the data to the backend
       const response = await fetch(
-        "https://smartnotes-backend.vercel.app//user-api/users/login",
+        "https://smartnotes-backend.vercel.app/user-api/users/login",
         {
           method: "POST",
           headers: {
