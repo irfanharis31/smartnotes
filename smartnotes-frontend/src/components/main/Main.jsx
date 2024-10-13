@@ -56,9 +56,9 @@ function Main() {
               To Manage Their Notes.
             </p>
             <div className='flex mt-10 font-semibold'>
-              <p className='border rounded-full bg-[#41b3a2] xl:px-16 px-10 xl:py-2 py-0.5 xl:text-3xl text-xl text-white'>Note</p>
-              <p className='border rounded-full bg-[#41b3a2] xl:px-16 px-8 py-0.5 pb-1 xl:text-3xl text-xl text-white ms-2'>Organise</p>
-              <p className='border rounded-full bg-[#41b3a2] xl:px-16 px-8 py-0.5 xl:text-3xl text-xl text-white ms-2'>Secure</p>
+              <p className='border rounded-full bg-[#41b3a2] xl:px-16 px-8 py-2 pb-1 xl:text-3xl text-xl text-white ms-2'>Note</p>
+              <p className='border rounded-full bg-[#41b3a2] xl:px-16 px-8 py-2 pb-1 xl:text-3xl text-xl text-white ms-2'>Organise</p>
+              <p className='border rounded-full bg-[#41b3a2] xl:px-16 px-8 py-2 xl:text-3xl text-xl text-white ms-2'>Secure</p>
             </div>
           </div>
           <div className='mt-12'>
